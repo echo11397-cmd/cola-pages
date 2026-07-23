@@ -1047,12 +1047,12 @@ function say(text){
 /* ================= 小芽 · 养成 ================= */
 const STAGES=[
   {name:'种子',  need:0,  line:'还在土里睡大觉'},
-  {name:'发芽',  need:1,  line:'探出小脑袋啦'},
-  {name:'两叶',  need:3,  line:'张开两片小叶子'},
-  {name:'小苗',  need:7,  line:'噌噌往上长'},
-  {name:'花苞',  need:15, line:'攒了个花骨朵'},
-  {name:'开花',  need:30, line:'开出第一朵花'},
-  {name:'繁茂',  need:50, line:'满枝都是花'},
+  {name:'发芽',  need:1,  line:'探出小脑袋啦',   grow:'发芽了'},
+  {name:'两叶',  need:3,  line:'张开两片嫩叶子', grow:'长出两片嫩叶了'},
+  {name:'小苗',  need:7,  line:'噌噌往上长',     grow:'长成小苗了'},
+  {name:'花苞',  need:15, line:'攒了个花骨朵',   grow:'冒出花骨朵了'},
+  {name:'开花',  need:30, line:'开出了第一朵花', grow:'开花了'},
+  {name:'繁茂',  need:50, line:'满枝都是花',     grow:'满枝繁花了'},
 ];
 function stageFor(g){let s=0;for(let i=0;i<STAGES.length;i++){if(g>=STAGES[i].need)s=i;}return s;}
 function sproutSVG(stage,mono){
@@ -1102,7 +1102,7 @@ function celebrateStageUp(stage){
     av.appendChild(sp);
     setTimeout(()=>sp.remove(),1300);
   }
-  say(pick([`我长成「${STAGES[stage].name}」啦！`,`小芽升级：${STAGES[stage].name}！`,'嘿嘿，我又长大了一点']));
+  say(pick([`小芽${STAGES[stage].grow}！`,`小芽升级：${STAGES[stage].name}！`,'嘿嘿，我又长大了一点']));
 }
 function onComplete(){
   const s=store.data.settings;
@@ -1129,7 +1129,7 @@ function openGrowth(){
     const span=next.need-STAGES[st].need;
     const done=g-STAGES[st].need;
     fill.style.width=Math.min(100,Math.round(done/span*100))+'%';
-    count.textContent=`再完成 ${next.need-g} 条待办，就长成「${next.name}」啦`;
+    count.textContent=`再完成 ${next.need-g} 条，就${next.grow}`;
   }else{
     fill.style.width='100%';
     count.textContent='已经长到最大啦，满枝繁花';
