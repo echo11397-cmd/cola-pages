@@ -236,12 +236,39 @@
   .edit-btn:hover{background:var(--pine-soft);color:var(--pine)}
   @media (hover:none){.edit-btn{opacity:1}}
 
-  .empty{text-align:center;color:var(--ink-soft);padding:24px 0 16px;font-size:13.5px;line-height:1.7}
-  .empty .big{font-size:34px;display:block;margin-bottom:12px;filter:grayscale(.1)}
-  .empty .quote{font-family:var(--serif);font-size:15.5px;line-height:1.95;color:var(--ink);margin:2px 6px 9px;cursor:pointer;transition:opacity .2s}
+  .empty{display:flex;flex-direction:column;align-items:stretch;color:var(--ink-soft);padding:18px 0 14px;font-size:13.5px;line-height:1.7}
+  .companion-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .empty .big{
+    font-size:18px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+    width:26px;height:26px;border-radius:8px;background:#F5F0E6;border:1px solid rgba(120,100,70,.12);filter:grayscale(.03)
+  }
+  .companion-meta{flex:1;min-width:0}
+  .empty .quote-topic{font-size:13px;color:var(--marigold);font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .empty .quote{font-family:var(--serif);font-size:15.5px;line-height:1.95;color:var(--ink);margin:4px 2px 8px;cursor:pointer;transition:opacity .2s}
   .empty .quote:hover{opacity:.65}
-  .empty .quote-src{font-size:12px;color:var(--ink-soft);margin-bottom:16px}
-  .empty .empty-cta{font-size:12.5px;color:var(--pine)}
+  .empty .quote-src{font-size:12px;color:var(--ink-soft);margin-bottom:10px}
+  .quote-switch{
+    border:none;background:#F3EEE4;color:var(--pine);cursor:pointer;padding:6px 10px;border-radius:10px;
+    font-size:12px;flex-shrink:0;transition:.2s
+  }
+  .quote-switch:hover{background:var(--pine-soft)}
+  .empty .empty-cta{font-size:12.5px;color:var(--pine);margin-top:2px}
+  .companion-prompt{font-size:12px;color:var(--ink-soft);margin-top:-2px;margin-bottom:10px;line-height:1.6}
+  .companion-prompt button{border:none;background:none;color:var(--pine);cursor:pointer;padding:0;font:inherit}
+  .companion-modal{width:min(420px, calc(100vw - 32px))}
+  .companion-list{display:flex;flex-direction:column;gap:10px;max-height:min(52vh, 360px);overflow-y:auto;padding-right:2px;margin-top:10px}
+  .companion-group{margin-top:2px}
+  .companion-group h4{font-size:12px;color:var(--ink-soft);margin:10px 2px 8px;font-weight:600;letter-spacing:.02em}
+  .companion-card{
+    border:1px solid var(--line);background:#FBF7EE;border-radius:13px;padding:10px 12px;cursor:pointer;text-align:left;
+    transition:.18s
+  }
+  .companion-card:hover{border-color:var(--pine);box-shadow:0 8px 18px -14px rgba(44,122,91,.35);transform:translateY(-1px)}
+  .companion-card.active{border-color:var(--pine);background:#F1F8F4}
+  .companion-card .ct{font-size:13px;color:var(--ink);font-weight:600;line-height:1.4}
+  .companion-card .cs{font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .companion-card .cl{font-size:12px;color:var(--marigold);margin-top:6px;line-height:1.55}
+  .companion-modal .footer{gap:8px;flex-wrap:wrap}
 
   /* 未来任务折叠区（头部样式已与已完成区统一） */
   .future{margin-top:4px}
@@ -460,10 +487,17 @@
   <div class="scroll-region" id="scrollRegion">
     <div class="list" id="taskList"></div>
     <div class="empty" id="emptyHint">
-      <span class="big" id="emptyEmoji">🪴</span>
+      <div class="companion-head">
+        <span class="big" id="emptyEmoji">📚</span>
+        <div class="companion-meta">
+          <div class="quote-topic" id="quoteTopic"></div>
+          <div class="quote-src" id="quoteSrc"></div>
+        </div>
+        <button class="quote-switch" id="quoteModeBtn" title="换一个主题">↻</button>
+      </div>
+      <div class="companion-prompt" id="companionPrompt">这周想陪你读什么？可以是书、电影、音乐，或者游戏。</div>
       <div class="quote" id="quoteText" title="点我换一句"></div>
-      <div class="quote-src" id="quoteSrc"></div>
-      <div class="empty-cta">还没有任务～ 点 🌱 或按空格，说给小芽听</div>
+      <div class="empty-cta">点 🌱 或按空格，说给小芽听；点右上角 ↻ 可以换主题</div>
     </div>
   </div>
 
@@ -564,6 +598,20 @@
   </div>
 </div>
 
+<!-- 本周陪伴弹窗 -->
+<div class="mask" id="companionMask">
+  <div class="modal companion-modal">
+    <h3>📖 这周想陪你看什么？</h3>
+    <div class="companion-prompt">可以选书、电影、音乐、游戏，也可以让我先给你挑一个。</div>
+    <div class="row" style="margin-top:0">
+      <button class="btn ghost" id="companionRecommendBtn">给我推荐一个</button>
+      <span class="hint" id="companionStatus"></span>
+    </div>
+    <div class="companion-list" id="companionList"></div>
+    <div class="footer"><button class="btn primary" id="companionClose">先不换</button></div>
+  </div>
+</div>
+
 <!-- 设置弹窗 -->
 <div class="mask" id="settingsMask">
   <div class="modal">
@@ -638,7 +686,7 @@ const store = {
     return {
       apiKey:'', model:'qwen3.5-plus', baseUrl:'https://tokendance.space/gateway/v1',
       sound:'chime', reviewTime:'22:00', keepHistory:true, voiceAlert:true, lastReviewDate:'',
-      nickname:'', growth:0
+      nickname:'', growth:0, companionWeek:'', companionKind:'', companionId:''
     };
   },
   save(){ localStorage.setItem(this.key, JSON.stringify(this.data)); },
@@ -1668,50 +1716,159 @@ function toast(msg){
   toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
 }
 
-/* ================= 每日一句 ================= */
-const quotes=[
-  {t:"我把我整个的灵魂都给你，连同它的怪癖，耍小脾气，忽明忽暗，一千八百种坏毛病。它真讨厌，只有一点好，爱你。",s:"王小波《爱你就像爱生命》"},
-  {t:"不管我本人多么平庸，我总觉得对你的爱很美。",s:"王小波《爱你就像爱生命》"},
-  {t:"一个人只拥有此生此世是不够的，他还应该拥有诗意的世界。",s:"王小波《万寿寺》"},
-  {t:"我活在世上，无非想要明白些道理，遇见些有趣的事。",s:"王小波"},
-  {t:"从前的日色变得慢，车、马、邮件都慢，一生只够爱一个人。",s:"木心《从前慢》"},
-  {t:"所谓万丈深渊，下去，也是前程万里。",s:"木心《素履之往》"},
-  {t:"命定的局限尽可永在，不屈的挑战却不可须臾或缺。",s:"史铁生"},
-  {t:"微笑着，去唱生活的歌谣。",s:"史铁生"},
-  {t:"四方食事，不过一碗人间烟火。",s:"汪曾祺"},
-  {t:"家人闲坐，灯火可亲。",s:"汪曾祺"},
-  {t:"我行过许多地方的桥，看过许多次数的云，喝过许多种类的酒，却只爱过一个正当最好年龄的人。",s:"沈从文"},
-  {t:"于千万人之中遇见你所要遇见的人，于千万年之中，时间的无涯的荒野里，没有早一步，也没有晚一步，刚巧赶上了。",s:"张爱玲《爱》"},
-  {t:"心若没有栖息的地方，到哪里都是在流浪。",s:"三毛"},
-  {t:"没有什么比时间更具有说服力了，因为时间无需通知我们就可以改变一切。",s:"余华《活着》"},
-  {t:"人生就像一盒巧克力，你永远不知道下一颗是什么味道。",s:"《阿甘正传》"},
-  {t:"有些鸟注定是关不住的，它的每一片羽毛都闪耀着自由的光辉。",s:"《肖申克的救赎》"},
-  {t:"你如果不出去走走，你就会以为这就是全世界。",s:"《天堂电影院》"},
-  {t:"死亡不是生命的终点，遗忘才是。",s:"《寻梦环游记》"},
-  {t:"生活不是电影，生活比电影难多了。",s:"《天堂电影院》"},
-  {t:"世上无难事，只要肯放弃。",s:"网络段子"},
-  {t:"今天的努力，是为了明天能更心安理得地躺平。",s:"佚名"},
-  {t:"早睡早起身体好，晚睡晚起心情好。",s:"佚名"},
-  {t:"两分钟法则：能在两分钟内做完的事，立刻去做，别让它进待办清单。",s:"小芽的便签"},
-  {t:"番茄工作法：专注 25 分钟，休息 5 分钟，比硬撑一下午更扛得住。",s:"小芽的便签"},
-  {t:"把大任务拆成「下一步具体动作」，拖延能少一半。",s:"小芽的便签"},
-  {t:"人舌头只能分辨五种基本味道，其余丰富的风味大多来自鼻子。",s:"小芽的冷知识"},
-  {t:"站起来喝口水，顺便看看窗外。眼睛和腰都会谢谢你。",s:"小芽的提醒"},
-  {t:"完成比完美重要。先做完，再做好。",s:"小芽的便签"}
-];
-const emptyEmojis=['🪴','🌿','📖','☕','🕯️','✨'];
+/* ================= 本周陪伴 ================= */
+const KIND_META={
+  book:{label:'图书',verb:'读',icon:'📚'},
+  film:{label:'电影',verb:'看',icon:'🎬'},
+  music:{label:'音乐',verb:'听',icon:'🎵'},
+  game:{label:'游戏',verb:'玩',icon:'🎮'},
+};
+const COMPANIONS={
+  book:[
+    {id:'hongloumeng',title:'《红楼梦》',author:'曹雪芹',lines:['满纸荒唐言，一把辛酸泪。','假作真时真亦假，无为有处有还无。','世事洞明皆学问，人情练达即文章。']},
+    {id:'san-ti',title:'《三体》',author:'刘慈欣',lines:['给岁月以文明，而不是给文明以岁月。','弱小和无知不是生存障碍，傲慢才是。','我们的征途是星辰大海。']},
+    {id:'xiao-wangzi',title:'《小王子》',author:'圣埃克苏佩里',lines:['真正重要的东西，用眼睛是看不见的。','你在玫瑰花上耗费的时间，使它变得如此重要。','你负责你的玫瑰。']},
+    {id:'huozhe',title:'《活着》',author:'余华',lines:['没有什么比时间更具有说服力了。','活着本身，就是件很了不起的事。','人是为了活着本身而活着。']},
+    {id:'biancheng',title:'《边城》',author:'沈从文',lines:['这个人也许永远不回来了，也许明天回来。','一切总有一个结局，只有人间烟火长久。','我要向着有光的地方去。']},
+  ],
+  film:[
+    {id:'tiantangdianyingyuan',title:'《天堂电影院》',author:'朱塞佩·托纳多雷',lines:['生活不是电影，生活比电影难多了。','长大后，看到一部电影会突然想起一个人。','有些告别，只能慢一点。']},
+    {id:'haishanggangqinshi',title:'《海上钢琴师》',author:'朱塞佩·托纳多雷',lines:['陆地上人太多了。','键盘有限，想象力无限。','我在海上，才能把自己弹完整。']},
+    {id:'xingji-chuansuo',title:'《星际穿越》',author:'克里斯托弗·诺兰',lines:['爱是唯一能够超越时空的东西。','别把宇宙想得太远，它也会落回你心里。','我们终究是在为彼此寻找回家的路。']},
+    {id:'siwangshidong',title:'《死亡诗社》',author:'彼得·威尔',lines:['Carpe diem.','把目光放在你自己的路上。','诗和呼吸一样，都是活着的证据。']},
+    {id:'qiannianqianxun',title:'《千与千寻》',author:'宫崎骏',lines:['不要回头，往前走。','名字会被带走，但心不会。','迷路的时候，也别把自己弄丢。']},
+  ],
+  music:[
+    {id:'pingfan',title:'《平凡之路》',author:'朴树',lines:['适合把日子走慢一点。','如果今天有点乱，就让它先平着。','走到最后，很多事都会变轻。']},
+    {id:'nightstar',title:'《夜空中最亮的星》',author:'逃跑计划',lines:['适合夜里把心收回来。','把窗关小一点，把自己照亮一点。','总有一颗星，是留给你的。']},
+    {id:'daoxiang',title:'《稻香》',author:'周杰伦',lines:['适合把忙乱先放一放。','回到最简单的地方，脑子会安静些。','风一吹，很多烦恼就散了。']},
+    {id:'yihunyisu',title:'《一荤一素》',author:'毛不易',lines:['适合想念家里烟火气的时候。','有些温柔，不在高声里。','平淡一点，也很好。']},
+    {id:'huranzhijian',title:'《忽然之间》',author:'莫文蔚',lines:['适合听一遍，把情绪慢慢放下。','忽然之间，很多东西就过去了。','晚一点也没关系。']},
+  ],
+  game:[
+    {id:'fengzhilvren',title:'《风之旅人》',author:'thatgamecompany',lines:['适合把注意力还给呼吸。','你会走得很慢，但每一步都算数。','有些路，本来就是用来感受的。']},
+    {id:'gris',title:'《GRIS》',author:'Nomada Studio',lines:['像一首会发光的诗。','颜色回来之前，先学会安静。','有时候，脆弱也很漂亮。']},
+    {id:'quyueliang',title:'《去月球》',author:'Freebird Games',lines:['适合准备好安静掉一点眼泪。','记忆会偏，但爱不会。','想起一个人，月亮就近了。']},
+    {id:'zelda',title:'《塞尔达传说：旷野之息》',author:'Nintendo',lines:['适合让好奇心重新上班。','先别赶路，先去看看那片草地。','冒险最好的开场，是愿意出门。']},
+    {id:'disco',title:'《极乐迪斯科》',author:'ZA/UM',lines:['适合喜欢文字和混乱的人。','世界碎一点，问题反而更清楚。','有些夜晚，适合把心里的噪音写下来。']},
+  ]
+};
+const COMPANION_ORDER=['book','film','music','game'];
+const COMPANION_MASK=document.getElementById('companionMask');
+const COMPANION_LIST=document.getElementById('companionList');
+const COMPANION_STATUS=document.getElementById('companionStatus');
+const COMPANION_PROMPT=document.getElementById('companionPrompt');
+let activeCompanion=null;
+let activeCompanionKey='';
+let companionLineIndex=0;
 function dayOfYear(){const n=new Date();return Math.floor((n-new Date(n.getFullYear(),0,0))/86400000);}
-let quoteIdx=dayOfYear()%quotes.length;
-function showQuote(){
-  const q=quotes[quoteIdx%quotes.length];
-  document.getElementById('quoteText').textContent='「'+q.t+'」';
-  document.getElementById('quoteSrc').textContent='—— '+q.s;
-  document.getElementById('emptyEmoji').textContent=emptyEmojis[dayOfYear()%emptyEmojis.length];
+function weekKey(){
+  const d=new Date();
+  const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const day=(x.getDay()+6)%7;
+  x.setDate(x.getDate()-day);
+  return x.toISOString().slice(0,10);
 }
-document.getElementById('quoteText').addEventListener('click',()=>{
-  quoteIdx=(quoteIdx+1+Math.floor(Math.random()*(quotes.length-1)))%quotes.length;
-  showQuote();
+function hashString(str){let h=0;for(const ch of String(str))h=(h*31+ch.codePointAt(0))>>>0;return h>>>0;}
+function flattenCompanions(){return COMPANION_ORDER.flatMap(kind=>(COMPANIONS[kind]||[]).map(item=>Object.assign({kind},item)));}
+function companionKey(c){return `${c.kind}:${c.id}`;}
+function findCompanion(kind,id){
+  const item=(COMPANIONS[kind]||[]).find(x=>x.id===id);
+  return item?Object.assign({kind},item):null;
+}
+function pickRecommendedCompanion(seed,currentKey=''){
+  const all=flattenCompanions();
+  const pool=all.filter(c=>companionKey(c)!==currentKey);
+  const src=pool.length?pool:all;
+  return src[hashString(seed)%src.length];
+}
+function resolveCompanion(){
+  const s=store.data.settings;
+  const wk=weekKey();
+  let c=null;
+  if(s.companionWeek===wk&&s.companionKind&&s.companionId)c=findCompanion(s.companionKind,s.companionId);
+  if(!c){
+    c=pickRecommendedCompanion(`week:${wk}`);
+    s.companionWeek=wk;
+    s.companionKind=c.kind;
+    s.companionId=c.id;
+    store.save();
+  }
+  return c;
+}
+function companionVerb(c){return KIND_META[c.kind]?.verb||'看';}
+function companionLabel(c){return KIND_META[c.kind]?.label||'内容';}
+function companionIcon(c){return KIND_META[c.kind]?.icon||'📖';}
+function setCompanion(c){
+  const s=store.data.settings;
+  s.companionWeek=weekKey();
+  s.companionKind=c.kind;
+  s.companionId=c.id;
+  store.save();
+  activeCompanionKey='';
+  renderCompanion();
+  renderCompanionPicker();
+}
+function renderCompanion(){
+  const c=resolveCompanion();
+  activeCompanion=c;
+  const key=companionKey(c);
+  if(activeCompanionKey!==key){
+    activeCompanionKey=key;
+    companionLineIndex=hashString(`${weekKey()}|${key}`)%c.lines.length;
+  }
+  const line=c.lines[companionLineIndex%c.lines.length];
+  document.getElementById('emptyEmoji').textContent=companionIcon(c);
+  document.getElementById('quoteTopic').textContent=`本周陪你${companionVerb(c)} · ${c.title}`;
+  document.getElementById('quoteSrc').textContent=`${companionLabel(c)} · ${c.author}`;
+  document.getElementById('quoteText').textContent='「'+line+'」';
+  document.getElementById('quoteText').title='点我换一句';
+  COMPANION_PROMPT.innerHTML=`这周先陪你${companionVerb(c)}${c.title}。<button type="button" id="companionPromptSwitch">换一个主题</button>`;
+  const btn=document.getElementById('companionPromptSwitch');
+  if(btn)btn.onclick=openCompanionPicker;
+}
+function nextCompanionLine(){
+  if(!activeCompanion)activeCompanion=resolveCompanion();
+  companionLineIndex=(companionLineIndex+1)%activeCompanion.lines.length;
+  renderCompanion();
+}
+function renderCompanionPicker(){
+  const current=resolveCompanion();
+  COMPANION_STATUS.textContent=`当前：${companionVerb(current)}《${current.title}》`;
+  COMPANION_LIST.innerHTML=COMPANION_ORDER.map(kind=>{
+    const items=COMPANIONS[kind]||[];
+    return `<div class="companion-group"><h4>${KIND_META[kind].icon} ${KIND_META[kind].label}</h4>${items.map(item=>{
+      const selected=current.kind===kind&&current.id===item.id;
+      return `<button class="companion-card${selected?' active':''}" data-kind="${kind}" data-id="${item.id}"><div class="ct">${item.title}</div><div class="cs">${item.author}</div><div class="cl">${item.lines[0]}</div></button>`;
+    }).join('')}</div>`;
+  }).join('');
+  COMPANION_LIST.querySelectorAll('.companion-card').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const c=findCompanion(btn.dataset.kind,btn.dataset.id);
+      if(!c)return;
+      setCompanion(c);
+      COMPANION_MASK.classList.remove('show');
+      toast(`这周先陪你${companionVerb(c)}${c.title}`);
+    });
+  });
+}
+function openCompanionPicker(){
+  renderCompanionPicker();
+  COMPANION_MASK.classList.add('show');
+}
+document.getElementById('quoteText').addEventListener('click',nextCompanionLine);
+document.getElementById('quoteModeBtn').addEventListener('click',openCompanionPicker);
+document.getElementById('emptyEmoji').addEventListener('click',openCompanionPicker);
+document.getElementById('companionClose').addEventListener('click',()=>COMPANION_MASK.classList.remove('show'));
+COMPANION_MASK.addEventListener('click',e=>{if(e.target===COMPANION_MASK)COMPANION_MASK.classList.remove('show');});
+document.getElementById('companionRecommendBtn').addEventListener('click',()=>{
+  const cur=resolveCompanion();
+  const rec=pickRecommendedCompanion(`alt:${weekKey()}:${Date.now()}`,companionKey(cur));
+  setCompanion(rec);
+  COMPANION_MASK.classList.remove('show');
+  toast(`这周先陪你${companionVerb(rec)}${rec.title}`);
 });
+function showQuote(){renderCompanion();}
 
 /* ================= 启动 ================= */
 render();
