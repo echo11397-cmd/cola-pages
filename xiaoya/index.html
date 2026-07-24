@@ -268,7 +268,16 @@
     font-size:12px;flex-shrink:0;transition:.2s
   }
   .quote-switch:hover{background:var(--pine-soft)}
-  .empty .empty-cta{font-size:12.5px;color:var(--pine);margin-top:2px}
+  .empty .empty-cta{display:none}
+  .manual-modal{width:min(360px,calc(100vw - 32px));text-align:left}
+  .manual-kicker{font:600 10px var(--mono);letter-spacing:.1em;color:var(--marigold);text-transform:uppercase;margin-bottom:8px}
+  .manual-modal h3{margin-bottom:7px}
+  .manual-intro{font-family:var(--serif);font-size:13.5px;line-height:1.7;color:var(--ink-soft);margin:0 0 15px}
+  .manual-list{display:flex;flex-direction:column;gap:9px}
+  .manual-item{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--line);border-radius:11px;background:#FBF7EE}
+  .manual-item .manual-icon{width:25px;height:25px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#F2EAD9;border-radius:8px;font-size:16px}
+  .manual-item b{display:block;font-size:12.5px;line-height:1.35;color:var(--ink)}
+  .manual-item small{display:block;font-size:11.5px;line-height:1.5;color:var(--ink-soft);margin-top:2px}
   .companion-prompt{font-size:12px;color:var(--ink-soft);margin-top:-2px;margin-bottom:10px;line-height:1.6}
   .companion-prompt button{border:none;background:none;color:var(--pine);cursor:pointer;padding:0;font:inherit}
   .companion-modal{width:min(420px, calc(100vw - 32px))}
@@ -530,7 +539,6 @@
       </div>
       <div class="companion-prompt" id="companionPrompt">这周想陪你读什么？可以是书、电影、音乐，或者游戏。</div>
       <div class="quote" id="quoteText" title="点我换一句"></div>
-      <div class="empty-cta">点 🌱 或按空格，说给小芽听；点右上角 ↻ 可以换主题</div>
     </div>
   </div>
 
@@ -628,6 +636,21 @@
     <div class="growth-count" id="growthCount"></div>
     <div class="growth-total" id="growthTotal"></div>
     <div class="footer"><button class="btn primary" id="growthClose">继续加油</button></div>
+  </div>
+</div>
+
+<!-- 首次使用说明 -->
+<div class="mask" id="manualMask">
+  <div class="modal manual-modal">
+    <div class="manual-kicker" id="manualKicker">FIRST NOTE</div>
+    <h3 id="manualTitle">🌱 小芽使用说明</h3>
+    <p class="manual-intro" id="manualIntro">给你留一张小便签，第一次用的时候看一眼就好。</p>
+    <div class="manual-list">
+      <div class="manual-item"><span class="manual-icon">🌱</span><div><b id="manualSpeakTitle">按住小芽说话</b><small id="manualSpeakText">按住小芽或空格，说完松开；小芽会把一段话整理成待办。</small></div></div>
+      <div class="manual-item"><span class="manual-icon">↻</span><div><b id="manualThemeTitle">换一个本周主题</b><small id="manualThemeText">空状态里的主题可以每周更换，也可以自己输入一本书、一部电影或一款游戏。</small></div></div>
+      <div class="manual-item"><span class="manual-icon">💧</span><div><b id="manualGrowthTitle">完成任务，让小芽长大</b><small id="manualGrowthText">每完成一条待办，就给小芽浇一次水；阶段和进度会显示在主界面。</small></div></div>
+    </div>
+    <div class="footer"><button class="btn primary" id="manualClose">知道啦，开始吧</button></div>
   </div>
 </div>
 
@@ -753,7 +776,7 @@ const I18N={
     nameTitle:'想让我怎么称呼你？',nameTip:'不一定要叫老板——你喜欢的任何称呼都行',namePlaceholder:'比如：小圆 / Echo / 老板',nameConfirm:'好，就这么叫',nameDefault:'还是叫「老板」吧',
     growthClose:'继续加油',companionTitle:'这周想让我陪你看什么？',companionIntro:'可以选书籍、电影、音乐、游戏，也可以让我先给你挑一个。',recommend:'给我推荐一个',keep:'先不换',customLabel:'库里没有？也可以自己输入一个主题',customTitle:'作品名称，比如《银河帝国》',customAuthor:'作者 / 导演 / 歌手（可选）',customUse:'就用这个',customHint:'找不到也没关系，小芽会先把它记成这周的主题。',book:'书籍',film:'电影',music:'音乐',game:'游戏',
     brainOffline:'⚠️ 备用模式 · 点我填 Key 变更聪明',brainOnline:'🌱 小芽在线 · ',modelLoading:'🧠 语音模型加载中',organizing:'小芽正在整理…',
-    languageName:'中文'
+    languageName:'中文',manualKicker:'FIRST NOTE',manualTitle:'小芽使用说明',manualIntro:'给你留一张小便签，第一次用的时候看一眼就好。',manualSpeakTitle:'按住小芽说话',manualSpeakText:'按住小芽或空格，说完松开；小芽会把一段话整理成待办。',manualThemeTitle:'换一个本周主题',manualThemeText:'空状态里的主题可以每周更换，也可以自己输入一本书、一部电影或一款游戏。',manualGrowthTitle:'完成任务，让小芽长大',manualGrowthText:'每完成一条待办，就给小芽浇一次水；阶段和进度会显示在主界面。',manualClose:'知道啦，开始吧'
   },
   en:{
     settings:'Settings',switchLanguage:'Switch language',search:'Search tasks',searchPlaceholder:'Search all tasks, including completed and past…',all:'All',completed:'Done',todo:'To-do',
@@ -765,7 +788,7 @@ const I18N={
     nameTitle:'What should I call you?',nameTip:'It does not have to be Boss — choose anything you like',namePlaceholder:'For example: Echo / Sunny / Boss',nameConfirm:'That works',nameDefault:'Just call me Boss',
     growthClose:'Keep growing',companionTitle:'What would you like me to watch with you this week?',companionIntro:'Choose a book, film, piece of music, or game — or let me pick one.',recommend:'Pick for me',keep:'Keep this',customLabel:'Not in the library? Add your own theme',customTitle:'Title, for example Foundation',customAuthor:'Author / director / artist (optional)',customUse:'Use this',customHint:'That is okay — I will keep it as this week’s theme.',book:'Books',film:'Films',music:'Music',game:'Games',
     brainOffline:'⚠️ Offline mode · Add a Key to wake me up',brainOnline:'🌱 Sprig online · ',modelLoading:'🧠 Loading the voice model',organizing:'Sprig is sorting it out…',
-    languageName:'English'
+    languageName:'English',manualKicker:'FIRST NOTE',manualTitle:'A small note from Sprig',manualIntro:'Here is the one-minute tour. After this, I will stay out of your way.',manualSpeakTitle:'Hold Sprig to speak',manualSpeakText:'Hold Sprig or Space, then release when you are done. I will turn the whole thought into tasks.',manualThemeTitle:'Choose a weekly theme',manualThemeText:'Change the quiet-space theme each week, or add your own book, film, piece of music, or game.',manualGrowthTitle:'Complete tasks to help Sprig grow',manualGrowthText:'Each completed task gives Sprig a drop of water. Its stage and progress stay visible on the main screen.',manualClose:'Got it — let’s begin'
   }
 };
 let currentLang=sessionStorage.getItem('xiaoya.language')|| (Math.random()<.5?'zh':'en');
@@ -791,6 +814,8 @@ function applyLanguage(){
   const quoteBtn=document.getElementById('quoteModeBtn');if(quoteBtn)quoteBtn.title=currentLang==='en'?'Change theme':'换一个主题';
   const cta=document.querySelector('.empty-cta');if(cta)cta.textContent=tr('quoteCta');
   const micHint=document.getElementById('micHint');if(micHint)micHint.innerHTML=currentLang==='en'?'Hold <b>Space</b> or long-press 🌱 to speak, then release':'按住 <b>空格</b> 或长按 🌱 说话，松开结束';
+  const manualEls={manualKicker:'manualKicker',manualTitle:'manualTitle',manualIntro:'manualIntro',manualSpeakTitle:'manualSpeakTitle',manualSpeakText:'manualSpeakText',manualThemeTitle:'manualThemeTitle',manualThemeText:'manualThemeText',manualGrowthTitle:'manualGrowthTitle',manualGrowthText:'manualGrowthText',manualClose:'manualClose'};
+  Object.keys(manualEls).forEach(key=>{const el=document.getElementById(manualEls[key]);if(el)el.textContent=tr(key);});
   const companionH=document.querySelector('#companionMask h3');if(companionH)companionH.textContent=tr('companionTitle');
   const companionIntro=document.querySelector('#companionMask > .companion-modal > .companion-prompt');if(companionIntro)companionIntro.textContent=tr('companionIntro');
   const recommend=document.getElementById('companionRecommendBtn');if(recommend)recommend.textContent=tr('recommend');
@@ -1768,11 +1793,22 @@ function openNameDialog(){
   setTimeout(()=>document.getElementById('nameInput').focus(),120);
 }
 function closeNameDialog(){ nameMask.classList.remove('show'); }
+const manualMask=document.getElementById('manualMask');
+function openManual(){
+  if(localStorage.getItem('voiceTodo.v2.manualSeen'))return;
+  localStorage.setItem('voiceTodo.v2.manualSeen','1');
+  applyLanguage();
+  manualMask.classList.add('show');
+}
+function maybeOpenManual(delay=900){if(!localStorage.getItem('voiceTodo.v2.manualSeen'))setTimeout(openManual,delay);}
+manualMask.addEventListener('click',e=>{if(e.target===manualMask)manualMask.classList.remove('show');});
+document.getElementById('manualClose').addEventListener('click',()=>manualMask.classList.remove('show'));
 function finishWelcome(){
   if(!store.data.settings.apiKey&&!localStorage.getItem('voiceTodo.v2.welcomed')){
     localStorage.setItem('voiceTodo.v2.welcomed','1');
     setTimeout(()=>say(currentLang==='en'?`Hi ${displayName()}! I’m Sprig 🌱 Add a Key from ⚙️ and I’ll understand your messy thoughts.`:`${displayName()}好！我是小芽🌱 点左上角⚙️填个 Key，我就能听懂你的废话啦`),500);
   }
+  maybeOpenManual(950);
 }
 document.getElementById('nameConfirm').addEventListener('click',()=>{
   const v=document.getElementById('nameInput').value.trim();
@@ -2154,8 +2190,9 @@ if(!(store.data.settings.nickname||'').trim()){
   setTimeout(()=>openNameDialog(),600);
 }else if(!store.data.settings.apiKey&&!localStorage.getItem('voiceTodo.v2.welcomed')){
   localStorage.setItem('voiceTodo.v2.welcomed','1');
-  setTimeout(()=>say(`${displayName()}好！我是小芽🌱 点左上角⚙️填个 Key，我就能听懂你的废话啦`),900);
+  setTimeout(()=>say(currentLang==='en'?`Hi ${displayName()}! I’m Sprig 🌱 Add a Key from ⚙️ and I’ll understand your messy thoughts.`:`${displayName()}好！我是小芽🌱 点左上角⚙️填个 Key，我就能听懂你的废话啦`),900);
 }
+if((store.data.settings.nickname||'').trim())maybeOpenManual(1100);
 </script>
 </body>
 </html>
