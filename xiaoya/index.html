@@ -833,13 +833,15 @@ function applyLanguage(){
   const editCancel=document.getElementById('editCancel');if(editCancel)editCancel.textContent=tr('cancel');
   const editSave=document.getElementById('editSave');if(editSave)editSave.textContent=tr('save');
   const reviewTitle=document.querySelector('#reviewMask h3');if(reviewTitle)reviewTitle.textContent='🌙 '+tr('review');
-  const reviewSummary=document.getElementById('reviewSummary');if(reviewSummary&&reviewSummary.classList.contains('loading'))reviewSummary.textContent=tr('reviewLoading');
+  const reviewSummary=document.getElementById('reviewSummary');if(reviewSummary&&(!reviewSummary.classList.contains('loading')||reviewSummary.textContent.includes('小芽正在回忆')))reviewSummary.textContent=tr('reviewLoading');
   const rollover=document.getElementById('rolloverTitle');if(rollover&&currentLang==='en')rollover.textContent=tr('rollover');
   const reviewConfirm=document.getElementById('reviewConfirm');if(reviewConfirm)reviewConfirm.textContent=tr('reviewConfirm');
+  const nameTitle=document.getElementById('nameTitle');if(nameTitle)nameTitle.textContent='🌱 '+tr('nameTitle');
   const nameTip=document.getElementById('nameTip');if(nameTip)nameTip.textContent=tr('nameTip');
   const nameInput=document.getElementById('nameInput');if(nameInput)nameInput.placeholder=tr('namePlaceholder');
   const nameConfirm=document.getElementById('nameConfirm');if(nameConfirm)nameConfirm.textContent=tr('nameConfirm');
   const nameDefault=document.getElementById('nameDefault');if(nameDefault)nameDefault.textContent=tr('nameDefault');
+  const growthStageName=document.getElementById('growthStageName');if(growthStageName){const st=stageFor(store.data.settings.growth||0);growthStageName.textContent=`🌱 ${currentLang==='en'?'Sprig':'小芽'} · ${stageName(STAGES[st])}`;}
   const growthClose=document.getElementById('growthClose');if(growthClose)growthClose.textContent=tr('growthClose');
   const settingsTitle=document.querySelector('#settingsMask h3');if(settingsTitle)settingsTitle.textContent='⚙️ '+tr('settings');
   const modelSelect=document.getElementById('modelSelect');if(modelSelect&&modelSelect.options.length===1&&modelSelect.options[0].textContent==='加载中…')modelSelect.options[0].textContent=currentLang==='en'?'Loading…':'加载中…';
@@ -2011,7 +2013,10 @@ const COMPANION_EN_LINES={
   gris:['Like a poem that gives off its own light.','Before the colors return, learn to be still.','Sometimes vulnerability is beautiful.'],
   quyueliang:['A gentle game for a quiet cry.','Memory may bend, but love does not.','When you remember someone, the moon feels closer.'],
   zelda:['A good excuse to let curiosity clock back in.','Do not rush the road; go see what is growing there.','The best beginning to an adventure is choosing to step outside.'],
-  disco:['For anyone who likes words and a little disorder.','When the world breaks into pieces, the question can become clearer.','Some nights are made for writing down the noise inside.']
+  disco:['For anyone who likes words and a little disorder.','When the world breaks into pieces, the question can become clearer.','Some nights are made for writing down the noise inside.'],
+  foundation:['A good place to think about civilization, time, and choice.','If you liked The Three-Body Problem, this carries you farther into the future.','Calm, immense, and a little stubbornly human.'],
+  hyperion:['For anyone drawn to poetry, faith, and the scale of the cosmos.','Several lives, each with its own path, converge on one world.','A science-fiction epic to read slowly.'],
+  'xiao-wangzi':['The things that matter most cannot be seen with the eyes.','The time you spend on your rose makes it so important.','You become responsible, forever, for what you have tamed.']
 };
 function companionTitle(c){return currentLang==='en'?(COMPANION_EN[c.id]?.title||c.title):c.title;}
 function companionAuthor(c){return currentLang==='en'?(COMPANION_EN[c.id]?.author||c.author):c.author;}
