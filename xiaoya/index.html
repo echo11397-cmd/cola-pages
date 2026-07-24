@@ -743,7 +743,7 @@ const I18N={
     review:'Daily wrap-up',reviewLoading:'🌱 Looking back on your day…',rollover:'What should we do with the rest?',reviewConfirm:'Okay, arrange it',
     nameTitle:'What should I call you?',nameTip:'It does not have to be Boss — choose anything you like',namePlaceholder:'For example: Echo / Sunny / Boss',nameConfirm:'That works',nameDefault:'Just call me Boss',
     growthClose:'Keep growing',companionTitle:'What would you like me to watch with you this week?',companionIntro:'Choose a book, film, piece of music, or game — or let me pick one.',recommend:'Pick for me',keep:'Keep this',customLabel:'Not in the library? Add your own theme',customTitle:'Title, for example Foundation',customAuthor:'Author / director / artist (optional)',customUse:'Use this',customHint:'That is okay — I will keep it as this week’s theme.',book:'Books',film:'Films',music:'Music',game:'Games',
-    brainOffline:'⚠️ Offline mode · Add a Key to wake me up',brainOnline:'🌱 Xiaoya online · ',modelLoading:'🧠 Loading the voice model',organizing:'Xiaoya is sorting it out…',
+    brainOffline:'⚠️ Offline mode · Add a Key to wake me up',brainOnline:'🌱 Sprig online · ',modelLoading:'🧠 Loading the voice model',organizing:'Sprig is sorting it out…',
     languageName:'English'
   }
 };
@@ -754,7 +754,7 @@ function toggleLanguage(){currentLang=currentLang==='zh'?'en':'zh';sessionStorag
 function setLabelPrefix(selector,text){const el=document.querySelector(selector);if(!el)return;const control=el.querySelector('input,select');if(control)el.firstChild.nodeValue=text+' ';else el.textContent=text;}
 function applyLanguage(){
   document.documentElement.lang=currentLang==='en'?'en':'zh-CN';
-  document.title=currentLang==='en'?'Xiaoya · Voice Todo':'小芽 · 语音待办';
+  document.title=currentLang==='en'?'Sprig · Voice Todo':'小芽 · 语音待办';
   const langBtn=document.getElementById('languageBtn');
   if(langBtn){langBtn.textContent=currentLang==='zh'?'中/EN':'EN/中';langBtn.title=tr('switchLanguage');}
   const gear=document.getElementById('gearBtn');if(gear)gear.title=tr('settings');
@@ -1030,7 +1030,7 @@ function buildSystemPrompt(){
   const now=new Date();const wk=['日','一','二','三','四','五','六'][now.getDay()];
   const ds=now.toISOString().slice(0,10);
   const name=displayName();
-  if(currentLang==='en')return `You are Xiaoya, ${name}'s warm and practical voice-to-do assistant.
+  if(currentLang==='en')return `You are Sprig, ${name}'s warm and practical voice-to-do assistant.
 
 Today: ${ds}
 
@@ -1194,7 +1194,7 @@ async function distill(raw){
   let brain=null,usedFallback=false;
   if(cfg.apiKey){
     try{ brain=await callBrain(raw); }
-    catch(e){ console.error('brain error',e); usedFallback=true; toast(currentLang==='en'?'Xiaoya got distracted: '+e.message:'小芽走神了：'+e.message); }
+    catch(e){ console.error('brain error',e); usedFallback=true; toast(currentLang==='en'?'Sprig got distracted: '+e.message:'小芽走神了：'+e.message); }
   }else{ usedFallback=true; }
   if(!brain) brain=fallbackBrain(raw);
 
@@ -1282,7 +1282,7 @@ function celebrateStageUp(stage){
     av.appendChild(sp);
     setTimeout(()=>sp.remove(),1300);
   }
-  say(currentLang==='en'?pick([`Xiaoya ${stageGrow(STAGES[stage])}!`,`Xiaoya is now ${stageName(STAGES[stage])}!`,'Hey, I grew a little!']):pick([`小芽${stageGrow(STAGES[stage])}！`,`小芽升级：${stageName(STAGES[stage])}！`,'嘿嘿，我又长大了一点']));
+  say(currentLang==='en'?pick([`Sprig ${stageGrow(STAGES[stage])}!`,`Sprig is now ${stageName(STAGES[stage])}!`,'Hey, I grew a little!']):pick([`小芽${stageGrow(STAGES[stage])}！`,`小芽升级：${stageName(STAGES[stage])}！`,'嘿嘿，我又长大了一点']));
 }
 function onComplete(){
   const s=store.data.settings;
@@ -1300,7 +1300,7 @@ function openGrowth(){
   const g=store.data.settings.growth||0;
   const st=stageFor(g);
   document.getElementById('growthSprout').innerHTML=sproutSVG(st);
-  document.getElementById('growthStageName').textContent=`🌱 Xiaoya · ${stageName(STAGES[st])}`;
+  document.getElementById('growthStageName').textContent=`🌱 Sprig · ${stageName(STAGES[st])}`;
   document.getElementById('growthLine').textContent=stageLine(STAGES[st]);
   const next=STAGES[st+1];
   const fill=document.getElementById('growthFill');
@@ -1309,7 +1309,7 @@ function openGrowth(){
     const span=next.need-STAGES[st].need;
     const done=g-STAGES[st].need;
     fill.style.width=Math.min(100,Math.round(done/span*100))+'%';
-    count.textContent=currentLang==='en'?`${next.need-g} more tasks, then Xiaoya ${stageGrow(next)}`:`再完成 ${next.need-g} 条，就${stageGrow(next)}`;
+    count.textContent=currentLang==='en'?`${next.need-g} more tasks, then Sprig ${stageGrow(next)}`:`再完成 ${next.need-g} 条，就${stageGrow(next)}`;
   }else{
     fill.style.width='100%';
     count.textContent=currentLang==='en'?'Already in full bloom':'已经长到最大啦，满枝繁花';
@@ -1725,7 +1725,7 @@ function closeNameDialog(){ nameMask.classList.remove('show'); }
 function finishWelcome(){
   if(!store.data.settings.apiKey&&!localStorage.getItem('voiceTodo.v2.welcomed')){
     localStorage.setItem('voiceTodo.v2.welcomed','1');
-    setTimeout(()=>say(currentLang==='en'?`Hi ${displayName()}! I’m Xiaoya 🌱 Add a Key from ⚙️ and I’ll understand your messy thoughts.`:`${displayName()}好！我是小芽🌱 点左上角⚙️填个 Key，我就能听懂你的废话啦`),500);
+    setTimeout(()=>say(currentLang==='en'?`Hi ${displayName()}! I’m Sprig 🌱 Add a Key from ⚙️ and I’ll understand your messy thoughts.`:`${displayName()}好！我是小芽🌱 点左上角⚙️填个 Key，我就能听懂你的废话啦`),500);
   }
 }
 document.getElementById('nameConfirm').addEventListener('click',()=>{
@@ -1962,7 +1962,7 @@ function companionVerb(c){const m=KIND_META[c.kind];return currentLang==='en'?(m
 function companionLabel(c){const m=KIND_META[c.kind];return currentLang==='en'?(m?.labelEn||'Content'):(m?.label||'内容');}
 function companionIcon(c){return KIND_META[c.kind]?.icon||'📖';}
 function companionIsQuote(c){return c.mode==='quote'||(c.kind==='book'&&!c.mode&&!c.custom);}
-function companionContentLabel(kind,item){return currentLang==='en'?(kind==='book'&&item.mode!=='note'?'Excerpt':'Xiaoya pick'):(kind==='book'&&item.mode!=='note'?'摘句':'小芽推荐');}
+function companionContentLabel(kind,item){return currentLang==='en'?(kind==='book'&&item.mode!=='note'?'Excerpt':'Sprig pick'):(kind==='book'&&item.mode!=='note'?'摘句':'小芽推荐');}
 function companionKindLabel(kind){const m=KIND_META[kind];return currentLang==='en'?(m?.labelEn||'Content'):(m?.label||'内容');}
 function setCompanion(c){
   const s=store.data.settings;
