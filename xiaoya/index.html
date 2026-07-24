@@ -256,18 +256,27 @@
   .companion-prompt{font-size:12px;color:var(--ink-soft);margin-top:-2px;margin-bottom:10px;line-height:1.6}
   .companion-prompt button{border:none;background:none;color:var(--pine);cursor:pointer;padding:0;font:inherit}
   .companion-modal{width:min(420px, calc(100vw - 32px))}
-  .companion-list{display:flex;flex-direction:column;gap:10px;max-height:min(52vh, 360px);overflow-y:auto;padding-right:2px;margin-top:10px}
+  .companion-list{display:flex;flex-direction:column;gap:10px;max-height:min(48vh, 330px);overflow-y:auto;padding-right:2px;margin-top:10px}
   .companion-group{margin-top:2px}
   .companion-group h4{font-size:12px;color:var(--ink-soft);margin:10px 2px 8px;font-weight:600;letter-spacing:.02em}
   .companion-card{
-    border:1px solid var(--line);background:#FBF7EE;border-radius:13px;padding:10px 12px;cursor:pointer;text-align:left;
+    height:104px;min-height:104px;display:flex;flex-direction:column;justify-content:space-between;
+    border:1px solid var(--line);background:#FBF7EE;border-radius:13px;padding:11px 12px;cursor:pointer;text-align:left;
     transition:.18s
   }
+  .companion-card.kind-book{background:#FBF4E6}
+  .companion-card.kind-film{background:#EEF5F7}
+  .companion-card.kind-music{background:#F1F7EF}
+  .companion-card.kind-game{background:#F8F0E7}
   .companion-card:hover{border-color:var(--pine);box-shadow:0 8px 18px -14px rgba(44,122,91,.35);transform:translateY(-1px)}
-  .companion-card.active{border-color:var(--pine);background:#F1F8F4}
+  .companion-card.active{border-color:var(--pine);box-shadow:inset 3px 0 0 var(--pine)}
   .companion-card .ct{font-size:13px;color:var(--ink);font-weight:600;line-height:1.4}
   .companion-card .cs{font-size:12px;color:var(--ink-soft);margin-top:2px}
-  .companion-card .cl{font-size:12px;color:var(--marigold);margin-top:6px;line-height:1.55}
+  .companion-card .cl{font-size:12px;color:var(--marigold);margin-top:7px;line-height:1.5;min-height:3em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .companion-custom{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  .companion-custom .label{font-size:12px;color:var(--ink-soft);margin-bottom:7px}
+  .companion-custom .row{margin-top:7px;gap:7px}
+  .companion-custom input,.companion-custom select{min-width:0;flex:1}
   .companion-modal .footer{gap:8px;flex-wrap:wrap}
 
   /* 未来任务折叠区（头部样式已与已完成区统一） */
@@ -601,13 +610,27 @@
 <!-- 本周陪伴弹窗 -->
 <div class="mask" id="companionMask">
   <div class="modal companion-modal">
-    <h3>📖 这周想陪你看什么？</h3>
+    <h3>📖 这周想让我陪你看什么？</h3>
     <div class="companion-prompt">可以选书、电影、音乐、游戏，也可以让我先给你挑一个。</div>
     <div class="row" style="margin-top:0">
       <button class="btn ghost" id="companionRecommendBtn">给我推荐一个</button>
       <span class="hint" id="companionStatus"></span>
     </div>
     <div class="companion-list" id="companionList"></div>
+    <div class="companion-custom">
+      <div class="label">库里没有？也可以自己输入一个主题</div>
+      <div class="row">
+        <select id="companionCustomKind" aria-label="主题类型">
+          <option value="book">书</option><option value="film">电影</option><option value="music">音乐</option><option value="game">游戏</option>
+        </select>
+        <input id="companionCustomTitle" placeholder="作品名称，比如《银河帝国》">
+      </div>
+      <div class="row">
+        <input id="companionCustomAuthor" placeholder="作者 / 导演 / 歌手（可选）">
+        <button class="btn ghost" id="companionCustomUse">就用这个</button>
+      </div>
+      <div class="hint">找不到也没关系，小芽会先把它记成这周的主题。</div>
+    </div>
     <div class="footer"><button class="btn primary" id="companionClose">先不换</button></div>
   </div>
 </div>
@@ -686,7 +709,8 @@ const store = {
     return {
       apiKey:'', model:'qwen3.5-plus', baseUrl:'https://tokendance.space/gateway/v1',
       sound:'chime', reviewTime:'22:00', keepHistory:true, voiceAlert:true, lastReviewDate:'',
-      nickname:'', growth:0, companionWeek:'', companionKind:'', companionId:''
+      nickname:'', growth:0, companionWeek:'', companionKind:'', companionId:'',
+      companionCustomTitle:'', companionCustomAuthor:''
     };
   },
   save(){ localStorage.setItem(this.key, JSON.stringify(this.data)); },
@@ -1728,15 +1752,18 @@ const COMPANIONS={
     {id:'hongloumeng',title:'《红楼梦》',author:'曹雪芹',lines:['满纸荒唐言，一把辛酸泪。','假作真时真亦假，无为有处有还无。','世事洞明皆学问，人情练达即文章。']},
     {id:'san-ti',title:'《三体》',author:'刘慈欣',lines:['给岁月以文明，而不是给文明以岁月。','弱小和无知不是生存障碍，傲慢才是。','我们的征途是星辰大海。']},
     {id:'xiao-wangzi',title:'《小王子》',author:'圣埃克苏佩里',lines:['真正重要的东西，用眼睛是看不见的。','你在玫瑰花上耗费的时间，使它变得如此重要。','你负责你的玫瑰。']},
-    {id:'huozhe',title:'《活着》',author:'余华',lines:['没有什么比时间更具有说服力了。','活着本身，就是件很了不起的事。','人是为了活着本身而活着。']},
-    {id:'biancheng',title:'《边城》',author:'沈从文',lines:['这个人也许永远不回来了，也许明天回来。','一切总有一个结局，只有人间烟火长久。','我要向着有光的地方去。']},
+    {id:'huozhe',title:'《活着》',author:'余华',mode:'note',lines:['适合在生活很重的时候，重新想想“活着”本身。','它不替你把苦说轻，只陪你把日子看清楚。','有些故事，读完以后会更珍惜今天。']},
+    {id:'biancheng',title:'《边城》',author:'沈从文',mode:'note',lines:['适合想读一点清澈、缓慢，又带着淡淡惆怅的文字。','湘西的水流得很慢，人的心事也慢慢浮出来。','这个人也许永远不回来了，也许明天回来。']},
+    {id:'foundation',title:'《基地》',author:'艾萨克·阿西莫夫',mode:'note',lines:['适合想一想文明、时间和选择。','如果你喜欢《三体》，可以从这里继续往更远的未来走。','冷静、宏大，又有一点人类的固执。']},
+    {id:'hyperion',title:'《海伯利安》',author:'丹·西蒙斯',mode:'note',lines:['适合喜欢诗、宗教和宇宙尺度的人。','几条不同的人生，会在同一颗星球上汇合。','这是一部适合慢慢读的科幻史诗。']},
   ],
   film:[
     {id:'tiantangdianyingyuan',title:'《天堂电影院》',author:'朱塞佩·托纳多雷',lines:['生活不是电影，生活比电影难多了。','长大后，看到一部电影会突然想起一个人。','有些告别，只能慢一点。']},
     {id:'haishanggangqinshi',title:'《海上钢琴师》',author:'朱塞佩·托纳多雷',lines:['陆地上人太多了。','键盘有限，想象力无限。','我在海上，才能把自己弹完整。']},
     {id:'xingji-chuansuo',title:'《星际穿越》',author:'克里斯托弗·诺兰',lines:['爱是唯一能够超越时空的东西。','别把宇宙想得太远，它也会落回你心里。','我们终究是在为彼此寻找回家的路。']},
     {id:'siwangshidong',title:'《死亡诗社》',author:'彼得·威尔',lines:['Carpe diem.','把目光放在你自己的路上。','诗和呼吸一样，都是活着的证据。']},
-    {id:'qiannianqianxun',title:'《千与千寻》',author:'宫崎骏',lines:['不要回头，往前走。','名字会被带走，但心不会。','迷路的时候，也别把自己弄丢。']},
+    {id:'qiannianqianxun',title:'《千与千寻》',author:'宫崎骏',mode:'note',lines:['适合在心里有点迷路的时候重看。','它不急着替你解释，只陪你走过那段路。','有些成长，是走出去以后才发生的。']},
+    {id:'blade-runner',title:'《银翼杀手2049》',author:'丹尼斯·维伦纽瓦',mode:'note',lines:['适合喜欢冷色城市、记忆和存在问题的人。','它的安静，比很多台词更有重量。','看完以后，可能会想很久“我是谁”。']},
   ],
   music:[
     {id:'pingfan',title:'《平凡之路》',author:'朴树',lines:['适合把日子走慢一点。','如果今天有点乱，就让它先平着。','走到最后，很多事都会变轻。']},
@@ -1782,11 +1809,24 @@ function pickRecommendedCompanion(seed,currentKey=''){
   const src=pool.length?pool:all;
   return src[hashString(seed)%src.length];
 }
+function buildCustomCompanion(s){
+  const kind=s.companionKind||'book';
+  const title=(s.companionCustomTitle||'').trim();
+  if(!title)return null;
+  const author=(s.companionCustomAuthor||'').trim()||'你选的主题';
+  const verb=KIND_META[kind]?.verb||'看';
+  return {
+    kind,id:'custom',title,author,mode:'note',
+    lines:[`这周，想让我陪你${verb}${title}。`,`它还没进小芽的书架，先把它放进这一周。`,`找到喜欢的一句，再交给小芽收藏。`],
+    custom:true
+  };
+}
 function resolveCompanion(){
   const s=store.data.settings;
   const wk=weekKey();
   let c=null;
-  if(s.companionWeek===wk&&s.companionKind&&s.companionId)c=findCompanion(s.companionKind,s.companionId);
+  if(s.companionWeek===wk&&s.companionKind&&s.companionId==='custom')c=buildCustomCompanion(s);
+  else if(s.companionWeek===wk&&s.companionKind&&s.companionId)c=findCompanion(s.companionKind,s.companionId);
   if(!c){
     c=pickRecommendedCompanion(`week:${wk}`);
     s.companionWeek=wk;
@@ -1799,11 +1839,27 @@ function resolveCompanion(){
 function companionVerb(c){return KIND_META[c.kind]?.verb||'看';}
 function companionLabel(c){return KIND_META[c.kind]?.label||'内容';}
 function companionIcon(c){return KIND_META[c.kind]?.icon||'📖';}
+function companionIsQuote(c){return c.mode==='quote'||(c.kind==='book'&&!c.mode&&!c.custom);}
+function companionContentLabel(kind,item){return kind==='book'&&item.mode!=='note'?'摘句':'小芽推荐';}
 function setCompanion(c){
   const s=store.data.settings;
   s.companionWeek=weekKey();
   s.companionKind=c.kind;
   s.companionId=c.id;
+  s.companionCustomTitle='';
+  s.companionCustomAuthor='';
+  store.save();
+  activeCompanionKey='';
+  renderCompanion();
+  renderCompanionPicker();
+}
+function setCustomCompanion(kind,title,author){
+  const s=store.data.settings;
+  s.companionWeek=weekKey();
+  s.companionKind=kind;
+  s.companionId='custom';
+  s.companionCustomTitle=title.trim();
+  s.companionCustomAuthor=(author||'').trim();
   store.save();
   activeCompanionKey='';
   renderCompanion();
@@ -1820,10 +1876,10 @@ function renderCompanion(){
   const line=c.lines[companionLineIndex%c.lines.length];
   document.getElementById('emptyEmoji').textContent=companionIcon(c);
   document.getElementById('quoteTopic').textContent=`本周陪你${companionVerb(c)} · ${c.title}`;
-  document.getElementById('quoteSrc').textContent=`${companionLabel(c)} · ${c.author}`;
-  document.getElementById('quoteText').textContent='「'+line+'」';
+  document.getElementById('quoteSrc').textContent=companionIsQuote(c)?`${companionLabel(c)} · ${c.author}`:`${companionLabel(c)}推荐 · ${c.author}`;
+  document.getElementById('quoteText').textContent=companionIsQuote(c)?'「'+line+'」':line;
   document.getElementById('quoteText').title='点我换一句';
-  COMPANION_PROMPT.innerHTML=`这周先陪你${companionVerb(c)}${c.title}。<button type="button" id="companionPromptSwitch">换一个主题</button>`;
+  COMPANION_PROMPT.innerHTML=`这周想让我陪你${companionVerb(c)}${c.title}吗？<button type="button" id="companionPromptSwitch">换一个主题</button>`;
   const btn=document.getElementById('companionPromptSwitch');
   if(btn)btn.onclick=openCompanionPicker;
 }
@@ -1834,12 +1890,12 @@ function nextCompanionLine(){
 }
 function renderCompanionPicker(){
   const current=resolveCompanion();
-  COMPANION_STATUS.textContent=`当前：${companionVerb(current)}《${current.title}》`;
+  COMPANION_STATUS.textContent=`当前：${companionVerb(current)}${current.title}`;
   COMPANION_LIST.innerHTML=COMPANION_ORDER.map(kind=>{
     const items=COMPANIONS[kind]||[];
     return `<div class="companion-group"><h4>${KIND_META[kind].icon} ${KIND_META[kind].label}</h4>${items.map(item=>{
       const selected=current.kind===kind&&current.id===item.id;
-      return `<button class="companion-card${selected?' active':''}" data-kind="${kind}" data-id="${item.id}"><div class="ct">${item.title}</div><div class="cs">${item.author}</div><div class="cl">${item.lines[0]}</div></button>`;
+      return `<button class="companion-card kind-${kind}${selected?' active':''}" data-kind="${kind}" data-id="${item.id}"><div class="ct">${item.title}</div><div class="cs">${item.author}</div><div class="cl"><b>${companionContentLabel(kind,item)}</b> · ${item.lines.slice(0,2).join('  ·  ')}</div></button>`;
     }).join('')}</div>`;
   }).join('');
   COMPANION_LIST.querySelectorAll('.companion-card').forEach(btn=>{
@@ -1854,6 +1910,10 @@ function renderCompanionPicker(){
 }
 function openCompanionPicker(){
   renderCompanionPicker();
+  const s=store.data.settings;
+  document.getElementById('companionCustomKind').value=KIND_META[s.companionKind]?s.companionKind:'book';
+  document.getElementById('companionCustomTitle').value=s.companionId==='custom'?(s.companionCustomTitle||''):'';
+  document.getElementById('companionCustomAuthor').value=s.companionId==='custom'?(s.companionCustomAuthor||''):'';
   COMPANION_MASK.classList.add('show');
 }
 document.getElementById('quoteText').addEventListener('click',nextCompanionLine);
@@ -1867,6 +1927,15 @@ document.getElementById('companionRecommendBtn').addEventListener('click',()=>{
   setCompanion(rec);
   COMPANION_MASK.classList.remove('show');
   toast(`这周先陪你${companionVerb(rec)}${rec.title}`);
+});
+document.getElementById('companionCustomUse').addEventListener('click',()=>{
+  const kind=document.getElementById('companionCustomKind').value;
+  const title=document.getElementById('companionCustomTitle').value.trim();
+  const author=document.getElementById('companionCustomAuthor').value.trim();
+  if(!title){toast('先告诉我作品叫什么');document.getElementById('companionCustomTitle').focus();return;}
+  setCustomCompanion(kind,title,author);
+  COMPANION_MASK.classList.remove('show');
+  toast(`这周就陪你${KIND_META[kind].verb}${title}`);
 });
 function showQuote(){renderCompanion();}
 
