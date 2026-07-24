@@ -144,6 +144,8 @@
     padding:6px;border-radius:10px;transition:.2s;flex-shrink:0;
   }
   .gear:hover{background:var(--pine-soft);color:var(--pine);transform:rotate(30deg)}
+  .language-switch{border:1px solid var(--line);background:#FBF7EE;color:var(--ink-soft);font:600 10px var(--mono);cursor:pointer;padding:6px 7px;border-radius:9px;transition:.2s;flex-shrink:0}
+  .language-switch:hover{background:var(--pine-soft);color:var(--pine);border-color:var(--pine)}
 
   /* 统计 */
   .stats{display:flex;gap:8px;margin:10px 0 12px;align-items:stretch}
@@ -479,6 +481,7 @@
       <div class="whisper" id="weatherHint">今天也要慢慢来</div>
       <div class="brain-status off" id="brainStatus">⚠️ 备用模式</div>
     </div>
+    <button class="language-switch" id="languageBtn" title="切换语言">中/EN</button>
     <button class="gear" id="gearBtn" title="设置">⚙️</button>
   </header>
 
@@ -718,6 +721,94 @@ const store = {
   tasks(dateStr){ const d=dateStr||this.today(); if(!this.data.days[d]) this.data.days[d]=[]; return this.data.days[d]; }
 };
 store.load();
+const I18N={
+  zh:{
+    settings:'设置',switchLanguage:'切换语言',search:'搜索任务',searchPlaceholder:'搜索所有任务（含已完成、往期）…',all:'全部',completed:'完成',todo:'待办',
+    quotePrompt:'这周想让我陪你读什么？可以是书籍、电影、音乐，或者游戏。',quoteCta:'点 🌱 或按空格，说给小芽听；点右上角 ↻ 可以换主题',
+    doneHead:'已完成',futureHead:'以后的安排',expand:'点击展开',speak:'说话',typePlaceholder:'或者打字：提醒我下午三点写周报',micHint:'按住空格或长按 🌱 说话，松开结束',
+    reminder:'提醒时间',noReminder:'不提醒',delete:'删除',cancel:'取消',save:'保存',edit:'编辑',finish:'完成',snooze:'推迟30分',testConnection:'测试连接',
+    adjustTask:'调整任务',holdEdit:'长按语音修改',history:'保留任务修改记录',voiceAlert:'超时未完成时升级催促',dailyReview:'每日收尾时间',micCheck:'麦克风自检',done:'完成',
+    review:'今日收尾',reviewLoading:'🌱 小芽正在回忆你的一天…',rollover:'剩下的安排一下？',reviewConfirm:'好，就这么安排',
+    nameTitle:'想让我怎么称呼你？',nameTip:'不一定要叫老板——你喜欢的任何称呼都行',namePlaceholder:'比如：小圆 / Echo / 老板',nameConfirm:'好，就这么叫',nameDefault:'还是叫「老板」吧',
+    growthClose:'继续加油',companionTitle:'这周想让我陪你看什么？',companionIntro:'可以选书籍、电影、音乐、游戏，也可以让我先给你挑一个。',recommend:'给我推荐一个',keep:'先不换',customLabel:'库里没有？也可以自己输入一个主题',customTitle:'作品名称，比如《银河帝国》',customAuthor:'作者 / 导演 / 歌手（可选）',customUse:'就用这个',customHint:'找不到也没关系，小芽会先把它记成这周的主题。',book:'书籍',film:'电影',music:'音乐',game:'游戏',
+    brainOffline:'⚠️ 备用模式 · 点我填 Key 变更聪明',brainOnline:'🌱 小芽在线 · ',modelLoading:'🧠 语音模型加载中',organizing:'小芽正在整理…',
+    languageName:'中文'
+  },
+  en:{
+    settings:'Settings',switchLanguage:'Switch language',search:'Search tasks',searchPlaceholder:'Search all tasks, including completed and past…',all:'All',completed:'Done',todo:'To-do',
+    quotePrompt:'What would you like me to read, watch, listen to, or play with you this week?',quoteCta:'Hold 🌱 or press Space to speak · tap ↻ to change the theme',
+    doneHead:'Completed',futureHead:'Coming up',expand:'Tap to expand',speak:'Speak',typePlaceholder:'Or type: remind me to write the weekly report at 3 PM',micHint:'Hold Space or 🌱 to speak, then release',
+    reminder:'Reminder',noReminder:'No reminder',delete:'Delete',cancel:'Cancel',save:'Save',edit:'Edit',finish:'Done',snooze:'Snooze 30 min',testConnection:'Test connection',
+    adjustTask:'Edit task',holdEdit:'Hold to edit by voice',history:'Keep task history',voiceAlert:'Escalate overdue reminders',dailyReview:'Daily wrap-up time',micCheck:'Test microphone',done:'Done',
+    review:'Daily wrap-up',reviewLoading:'🌱 Looking back on your day…',rollover:'What should we do with the rest?',reviewConfirm:'Okay, arrange it',
+    nameTitle:'What should I call you?',nameTip:'It does not have to be Boss — choose anything you like',namePlaceholder:'For example: Echo / Sunny / Boss',nameConfirm:'That works',nameDefault:'Just call me Boss',
+    growthClose:'Keep growing',companionTitle:'What would you like me to watch with you this week?',companionIntro:'Choose a book, film, piece of music, or game — or let me pick one.',recommend:'Pick for me',keep:'Keep this',customLabel:'Not in the library? Add your own theme',customTitle:'Title, for example Foundation',customAuthor:'Author / director / artist (optional)',customUse:'Use this',customHint:'That is okay — I will keep it as this week’s theme.',book:'Books',film:'Films',music:'Music',game:'Games',
+    brainOffline:'⚠️ Offline mode · Add a Key to wake me up',brainOnline:'🌱 Xiaoya online · ',modelLoading:'🧠 Loading the voice model',organizing:'Xiaoya is sorting it out…',
+    languageName:'English'
+  }
+};
+let currentLang=sessionStorage.getItem('xiaoya.language')|| (Math.random()<.5?'zh':'en');
+sessionStorage.setItem('xiaoya.language',currentLang);
+function tr(key,vars={}){let s=(I18N[currentLang]&&I18N[currentLang][key])||I18N.zh[key]||key;return s.replace(/\{(\w+)\}/g,(_,k)=>vars[k]??'');}
+function toggleLanguage(){currentLang=currentLang==='zh'?'en':'zh';sessionStorage.setItem('xiaoya.language',currentLang);applyLanguage();render();showQuote();renderAvatar();if(typeof COMPANION_MASK!=='undefined'&&COMPANION_MASK.classList.contains('show'))renderCompanionPicker();}
+function setLabelPrefix(selector,text){const el=document.querySelector(selector);if(!el)return;const control=el.querySelector('input,select');if(control)el.firstChild.nodeValue=text+' ';else el.textContent=text;}
+function applyLanguage(){
+  document.documentElement.lang=currentLang==='en'?'en':'zh-CN';
+  document.title=currentLang==='en'?'Xiaoya · Voice Todo':'小芽 · 语音待办';
+  const langBtn=document.getElementById('languageBtn');
+  if(langBtn){langBtn.textContent=currentLang==='zh'?'中/EN':'EN/中';langBtn.title=tr('switchLanguage');}
+  const gear=document.getElementById('gearBtn');if(gear)gear.title=tr('settings');
+  const search=document.getElementById('searchToggle');if(search)search.title=tr('search');
+  const stats=document.querySelectorAll('.stats .stat span');if(stats.length>=3){stats[0].textContent=tr('all');stats[1].textContent=tr('completed');stats[2].textContent=tr('todo');}
+  const input=document.getElementById('searchInput');if(input)input.placeholder=tr('searchPlaceholder');
+  const textInput=document.getElementById('textInput');if(textInput)textInput.placeholder=tr('typePlaceholder');
+  const mic=document.getElementById('micBtn');if(mic)mic.title=tr('speak');
+  const quoteBtn=document.getElementById('quoteModeBtn');if(quoteBtn)quoteBtn.title=currentLang==='en'?'Change theme':'换一个主题';
+  const cta=document.querySelector('.empty-cta');if(cta)cta.textContent=tr('quoteCta');
+  const micHint=document.getElementById('micHint');if(micHint)micHint.innerHTML=currentLang==='en'?'Hold <b>Space</b> or long-press 🌱 to speak, then release':'按住 <b>空格</b> 或长按 🌱 说话，松开结束';
+  const companionH=document.querySelector('#companionMask h3');if(companionH)companionH.textContent=tr('companionTitle');
+  const companionIntro=document.querySelector('#companionMask > .companion-modal > .companion-prompt');if(companionIntro)companionIntro.textContent=tr('companionIntro');
+  const recommend=document.getElementById('companionRecommendBtn');if(recommend)recommend.textContent=tr('recommend');
+  const keep=document.getElementById('companionClose');if(keep)keep.textContent=tr('keep');
+  const customLabel=document.querySelector('.companion-custom .label');if(customLabel)customLabel.textContent=tr('customLabel');
+  const customTitle=document.getElementById('companionCustomTitle');if(customTitle)customTitle.placeholder=tr('customTitle');
+  const customAuthor=document.getElementById('companionCustomAuthor');if(customAuthor)customAuthor.placeholder=tr('customAuthor');
+  const customUse=document.getElementById('companionCustomUse');if(customUse)customUse.textContent=tr('customUse');
+  const customHint=document.querySelector('.companion-custom .hint');if(customHint)customHint.textContent=tr('customHint');
+  const bubbleDone=document.getElementById('bubbleDone');if(bubbleDone)bubbleDone.textContent='✓ '+tr('finish');
+  const bubbleSnooze=document.getElementById('bubbleSnooze');if(bubbleSnooze)bubbleSnooze.textContent=tr('snooze');
+  const bubbleEdit=document.getElementById('bubbleEdit');if(bubbleEdit)bubbleEdit.textContent=tr('edit');
+  const editTitle=document.querySelector('#editMask h3');if(editTitle)editTitle.textContent='✏️ '+tr('adjustTask');
+  const editDelete=document.getElementById('editDelete');if(editDelete)editDelete.textContent=tr('delete');
+  const editCancel=document.getElementById('editCancel');if(editCancel)editCancel.textContent=tr('cancel');
+  const editSave=document.getElementById('editSave');if(editSave)editSave.textContent=tr('save');
+  const reviewTitle=document.querySelector('#reviewMask h3');if(reviewTitle)reviewTitle.textContent='🌙 '+tr('review');
+  const reviewSummary=document.getElementById('reviewSummary');if(reviewSummary&&reviewSummary.classList.contains('loading'))reviewSummary.textContent=tr('reviewLoading');
+  const rollover=document.getElementById('rolloverTitle');if(rollover&&currentLang==='en')rollover.textContent=tr('rollover');
+  const reviewConfirm=document.getElementById('reviewConfirm');if(reviewConfirm)reviewConfirm.textContent=tr('reviewConfirm');
+  const nameTip=document.getElementById('nameTip');if(nameTip)nameTip.textContent=tr('nameTip');
+  const nameInput=document.getElementById('nameInput');if(nameInput)nameInput.placeholder=tr('namePlaceholder');
+  const nameConfirm=document.getElementById('nameConfirm');if(nameConfirm)nameConfirm.textContent=tr('nameConfirm');
+  const nameDefault=document.getElementById('nameDefault');if(nameDefault)nameDefault.textContent=tr('nameDefault');
+  const growthClose=document.getElementById('growthClose');if(growthClose)growthClose.textContent=tr('growthClose');
+  const settingsTitle=document.querySelector('#settingsMask h3');if(settingsTitle)settingsTitle.textContent='⚙️ '+tr('settings');
+  const modelSelect=document.getElementById('modelSelect');if(modelSelect&&modelSelect.options.length===1&&modelSelect.options[0].textContent==='加载中…')modelSelect.options[0].textContent=currentLang==='en'?'Loading…':'加载中…';
+  const testKey=document.getElementById('testKeyBtn');if(testKey)testKey.textContent=tr('testConnection');
+  const settingsClose=document.getElementById('settingsClose');if(settingsClose)settingsClose.textContent=tr('done');
+  const settingLabels=document.querySelectorAll('#settingsMask .field > label');
+  if(settingLabels.length>=3){settingLabels[0].textContent=currentLang==='en'?'🔑 TokenDance API key':'🔑 TokenDance API Key';settingLabels[1].textContent=currentLang==='en'?'🧠 Model':'🧠 模型（推荐快又省的）';settingLabels[2].textContent=currentLang==='en'?'🔗 Endpoint':'🔗 接口地址';}
+  const keyHint=document.querySelector('#settingsMask .field .hint');if(keyHint)keyHint.textContent=currentLang==='en'?'Create this in the TokenDance console. It stays in your browser and is never sent elsewhere.':'在 TokenDance 控制台「API 密钥」创建。只存在你本机浏览器，不会发给别处。';
+  if(typeof updateKeyStatus==='function')updateKeyStatus();
+  const soundLabel=document.querySelector('#settingsMask .modal > label');if(soundLabel)soundLabel.textContent=currentLang==='en'?'Reminder sound (▶ preview)':'提醒声音（▶ 试听）';
+  const soundSpans=document.querySelectorAll('#settingsMask .sound-opt span');if(soundSpans.length>=3){soundSpans[0].textContent=currentLang==='en'?'🔔 Soft chime':'🔔 轻柔钟声';soundSpans[1].textContent=currentLang==='en'?'💧 Water drop':'💧 水滴';soundSpans[2].textContent=currentLang==='en'?'🎵 Music box':'🎵 八音盒';}
+  const editMic=document.getElementById('editMicBtn');if(editMic)editMic.lastChild.nodeValue=currentLang==='en'?' Hold to edit by voice':' 长按语音修改';
+  const editHint=document.querySelector('#editMask .row .hint');if(editHint)editHint.textContent=currentLang==='en'?'Hold to speak, release to fill':'长按说话，松开填入';
+  const history=document.getElementById('historyToggle');if(history)history.parentElement.lastChild.nodeValue=currentLang==='en'?' Keep task history':' 保留任务修改记录';
+  const alerts=document.getElementById('voiceAlertToggle');if(alerts)alerts.parentElement.lastChild.nodeValue=currentLang==='en'?' Escalate overdue reminders':' 超时未完成时升级催促';
+  const micTest=document.getElementById('micTestBtn');if(micTest)micTest.textContent='🎙️ '+tr('micCheck');
+  setLabelPrefix('#reviewTimeInput',tr('dailyReview'));setLabelPrefix('#editTime',tr('reminder'));setLabelPrefix('#editNoTime',tr('noReminder'));
+  const opts=document.querySelectorAll('#companionCustomKind option');if(opts.length>=4){opts[0].textContent=tr('book');opts[1].textContent=tr('film');opts[2].textContent=tr('music');opts[3].textContent=tr('game');}
+}
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
 /* ================= 提示音 ================= */
@@ -743,17 +834,24 @@ function playSound(n){ try{(sounds[n]||sounds.chime)();}catch(e){} }
 function displayName(){ return (store.data.settings.nickname||'').trim()||'老板'; }
 function greet(){
   const h=new Date().getHours();
-  let g='你好';
-  if(h>=5&&h<11)g='早上好';else if(h>=11&&h<13)g='中午好';
-  else if(h>=13&&h<18)g='下午好';else if(h>=18&&h<23)g='晚上好';else g='夜深了';
-  document.getElementById('greet').innerHTML=`${g}，<span class="name" id="nameSpan" title="点我改称呼">${displayName()}</span>`;
+  const zh=h>=5&&h<11?'早上好':h>=11&&h<13?'中午好':h>=13&&h<18?'下午好':h>=18&&h<23?'晚上好':'夜深了';
+  const en=h>=5&&h<11?'Good morning':h>=11&&h<13?'Good afternoon':h>=13&&h<18?'Good afternoon':h>=18&&h<23?'Good evening':'Still up';
+  const g=currentLang==='en'?en:zh;
+  document.getElementById('greet').innerHTML=currentLang==='en'?`${g}, <span class="name" id="nameSpan" title="Click to rename">${displayName()}</span>`:`${g}，<span class="name" id="nameSpan" title="点我改称呼">${displayName()}</span>`;
   document.getElementById('nameSpan').addEventListener('click',()=>openNameDialog());
-  const hints=['今天也要慢慢来','一件一件来，不急','你比想象中更能干','累了就歇会儿'];
-  document.getElementById('weatherHint').textContent=hints[new Date().getDate()%hints.length];
+  const zhHints=['今天也要慢慢来','一件一件来，不急','你比想象中更能干','累了就歇会儿'];
+  const enHints=['Take it slowly today','One thing at a time','You can do more than you think','Rest when you need to'];
+  document.getElementById('weatherHint').textContent=(currentLang==='en'?enHints:zhHints)[new Date().getDate()%(currentLang==='en'?enHints:zhHints).length];
 }
 function fmtDate(){
-  const d=new Date();const wk=['日','一','二','三','四','五','六'][d.getDay()];
-  document.getElementById('dateLabel').textContent=`${d.getMonth()+1}月${d.getDate()}日 · 星期${wk}`;
+  const d=new Date();
+  if(currentLang==='en'){
+    const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    document.getElementById('dateLabel').textContent=`${d.toLocaleDateString('en-US',{month:'short'})} ${d.getDate()} · ${days[d.getDay()]}`;
+  }else{
+    const wk=['日','一','二','三','四','五','六'][d.getDay()];
+    document.getElementById('dateLabel').textContent=`${d.getMonth()+1}月${d.getDate()}日 · 星期${wk}`;
+  }
 }
 
 /* ================= 渲染 ================= */
@@ -773,11 +871,11 @@ function buildTaskCard(t){
       <div class="ttext"></div>
       <div class="tmeta">
         ${t.time?`<span class="chip">⏰ ${t.time}</span>`:''}
-        ${t.important?`<span class="chip imp">重要</span>`:''}
-        ${t.history&&t.history.length?`<span class="chip edited">改过${t.history.length}次</span>`:''}
+        ${t.important?`<span class="chip imp">${currentLang==='en'?'Important':'重要'}</span>`:''}
+        ${t.history&&t.history.length?`<span class="chip edited">${currentLang==='en'?'Edited '+t.history.length+' times':'改过'+t.history.length+'次'}</span>`:''}
       </div>
     </div>
-    <button class="edit-btn" data-act="edit" title="编辑">✏️</button>`;
+    <button class="edit-btn" data-act="edit" title="${currentLang==='en'?'Edit':'编辑'}">✏️</button>`;
   div.querySelector('.ttext').textContent=t.text;
   div.querySelectorAll('[data-act]').forEach(el=>el.addEventListener('click',e=>{
     e.stopPropagation();
@@ -803,6 +901,9 @@ function render(){
   document.getElementById('statTotal').textContent=tasks.length;
   document.getElementById('statDone').textContent=done.length;
   document.getElementById('statLeft').textContent=pending.length;
+  document.getElementById('doneHead').innerHTML=`<span class="arrow">▶</span>${tr('doneHead')} <b id="doneCount">${done.length}</b> ${currentLang==='en'?'items · '+tr('expand'):'条 · '+tr('expand')}`;
+  const futureCount=document.getElementById('futureCount')?.textContent||'0';
+  document.getElementById('futureHead').innerHTML=`<span class="arrow">▶</span>${tr('futureHead')} <b id="futureCount">${futureCount}</b> ${currentLang==='en'?'items · '+tr('expand'):'条 · '+tr('expand')}`;
   updateBrainStatus();
   renderFuture();
 }
@@ -833,7 +934,7 @@ function renderSearch(q){
   document.getElementById('statDone').textContent=results.filter(r=>r.t.done).length;
   document.getElementById('statLeft').textContent=results.filter(r=>!r.t.done).length;
   if(!results.length){
-    taskListEl.innerHTML='<div class="search-empty">🔍 没找到「'+q+'」相关的任务</div>';
+    taskListEl.innerHTML=currentLang==='en'?'<div class="search-empty">🔍 No tasks found for “'+q+'”</div>':'<div class="search-empty">🔍 没找到「'+q+'」相关的任务</div>';
     newIds.clear();return;
   }
   results.forEach(({t,d})=>{
@@ -868,8 +969,8 @@ document.getElementById('doneHead').addEventListener('click',()=>{
 function updateBrainStatus(){
   const el=document.getElementById('brainStatus');
   const cfg=store.data.settings;
-  if(cfg.apiKey){el.className='brain-status on';el.textContent='🌱 小芽在线 · '+cfg.model;el.onclick=null;}
-  else{el.className='brain-status off';el.textContent='⚠️ 备用模式 · 点我填 Key 变更聪明';el.onclick=()=>document.getElementById('gearBtn').click();}
+  if(cfg.apiKey){el.className='brain-status on';el.textContent=tr('brainOnline')+cfg.model;el.onclick=null;}
+  else{el.className='brain-status off';el.textContent=tr('brainOffline');el.onclick=()=>document.getElementById('gearBtn').click();}
 }
 
 function renderFuture(){
@@ -915,7 +1016,7 @@ function toggleTask(id){
   const t=f.t;
   t.done=!t.done;if(t.done){t.doneAt=Date.now();acknowledged.delete(id);}
   store.save();render();
-  if(t.done){onComplete();say(pick(['好样的，完成一条 ✓',`又搞定一件，${displayName()}厉害`,'漂亮，划掉一条']));}
+  if(t.done){onComplete();say(currentLang==='en'?pick(['Nice, one task done ✓',`Another one done, ${displayName()}!`,'Beautiful — crossed one off']):pick(['好样的，完成一条 ✓',`又搞定一件，${displayName()}厉害`,'漂亮，划掉一条']));}
 }
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
 function findTaskByKeyword(kw){
@@ -929,6 +1030,24 @@ function buildSystemPrompt(){
   const now=new Date();const wk=['日','一','二','三','四','五','六'][now.getDay()];
   const ds=now.toISOString().slice(0,10);
   const name=displayName();
+  if(currentLang==='en')return `You are Xiaoya, ${name}'s warm and practical voice-to-do assistant.
+
+Today: ${ds}
+
+Rules:
+- Extract the core action, remove filler words, and split multiple actions into separate add operations.
+- Correct obvious ASR homophones and recover the speaker's real intent.
+- Convert times to 24-hour HH:MM. Use null when no time is mentioned.
+- date defaults to null (today); convert tomorrow and other relative dates to YYYY-MM-DD.
+- Intent types: add / complete / delete / move / reset.
+- Keep say warm and brief (under 20 words), and address ${name}.
+
+Example:
+${name} says "Remind me to take medicine at 4 PM and call my mom tonight"
+{"ops":[{"type":"add","text":"Take medicine","time":"16:00"},{"type":"add","text":"Call my mom"}],"say":"Got it — medicine at 4, then call your mom"}
+
+Output JSON only:
+{"ops":[...],"say":"..."}`;
   return `你是「小芽」，${name}的贴心待办秘书。
 
 当前：${ds} 星期${wk}
@@ -979,16 +1098,16 @@ async function callBrain(raw){
 /* 备用大脑：没有 key 或调用失败时，用规则提炼（离线可用） */
 function fallbackBrain(raw){
   const text=raw.trim();
-  if(/^(全部重来|全部清空|清空|重置|重新开始)/.test(text))return{ops:[{type:'reset'}],say:'好，今天清空重来'};
+  if(/^(全部重来|全部清空|清空|重置|重新开始)/.test(text))return{ops:[{type:'reset'}],say:currentLang==='en'?'Okay, starting fresh':'好，今天清空重来'};
   let m=text.match(/^(?:完成|做完了?|做好了?|搞定)(.+)$/)||text.match(/^(?:把)?(.+?)(?:做完了|完成了|做好了|搞定|弄完了)$/);
-  if(m){return{ops:[{type:'complete',match:m[1].replace(/^把/,'')}],say:'记下啦，算你完成'};}
+  if(m){return{ops:[{type:'complete',match:m[1].replace(/^把/,'')}],say:currentLang==='en'?'Got it, marked done':'记下啦，算你完成'};}
   m=text.match(/^(?:删除|删掉|取消|去掉|不要了?)(.+)$/)||text.match(/^把(.+?)(?:删除|删掉|取消|去掉)$/);
-  if(m){return{ops:[{type:'delete',match:m[1].replace(/^把/,'')}],say:'好，删掉了'};}
+  if(m){return{ops:[{type:'delete',match:m[1].replace(/^把/,'')}],say:currentLang==='en'?'Okay, deleted':'好，删掉了'};}
   const time=parseTimeFromText(text);
   const cleaned=stripCommandWords(text);
   const parts=cleaned.split(/[，,、；;]|然后|接着|之后|还有/).map(s=>s.trim()).filter(s=>s.length>=1);
-  if(!parts.length)return{ops:[],say:'没太听清，再说一次？'};
-  return{ops:parts.map(p=>({type:'add',text:p,time,important:false})),say:parts.length>1?`一口气记下 ${parts.length} 条`:'记下啦'};
+  if(!parts.length)return{ops:[],say:currentLang==='en'?'I did not quite catch that. Try again?':'没太听清，再说一次？'};
+  return{ops:parts.map(p=>({type:'add',text:p,time,important:false})),say:currentLang==='en'?(parts.length>1?`Saved ${parts.length} tasks`:'Saved'):(parts.length>1?`一口气记下 ${parts.length} 条`:'记下啦')};
 }
 
 /* 规则版时间解析（备用） */
@@ -1067,7 +1186,7 @@ async function distill(raw){
   // 显示"整理中"
   const dEl=document.createElement('div');
   dEl.className='distilling';
-  dEl.innerHTML=`<div class="raw"></div><div class="lab"><span class="spark">🪄</span> 小芽正在整理…</div>`;
+  dEl.innerHTML=`<div class="raw"></div><div class="lab"><span class="spark">🪄</span> ${tr('organizing')}</div>`;
   dEl.querySelector('.raw').textContent='「'+raw+'」';
   taskListEl.prepend(dEl);
   emptyHint.style.display='none';
@@ -1075,7 +1194,7 @@ async function distill(raw){
   let brain=null,usedFallback=false;
   if(cfg.apiKey){
     try{ brain=await callBrain(raw); }
-    catch(e){ console.error('brain error',e); usedFallback=true; toast('小芽走神了：'+e.message); }
+    catch(e){ console.error('brain error',e); usedFallback=true; toast(currentLang==='en'?'Xiaoya got distracted: '+e.message:'小芽走神了：'+e.message); }
   }else{ usedFallback=true; }
   if(!brain) brain=fallbackBrain(raw);
 
@@ -1085,10 +1204,10 @@ async function distill(raw){
 
   // 反馈
   if(usedFallback&&cfg.apiKey){/* 已 toast */}
-  else if(!cfg.apiKey&&res.some(r=>r.type==='add')){ toast('（未配置 Key，用备用规则记下；配置后更聪明）'); }
+  else if(!cfg.apiKey&&res.some(r=>r.type==='add')){ toast(currentLang==='en'?'(No Key — saved with local rules; add one for smarter sorting)':'（未配置 Key，用备用规则记下；配置后更聪明）'); }
 
   if(brain.say) say(brain.say);
-  else if(res.some(r=>r.type==='add')) say(pick(['记下啦','好嘞，安排上了',`收到，${displayName()}`]));
+  else if(res.some(r=>r.type==='add')) say(currentLang==='en'?pick(['Got it','All set',`Got it, ${displayName()}`]):pick(['记下啦','好嘞，安排上了',`收到，${displayName()}`]));
   if(res.some(r=>r.type==='add')) playSound('drop');
 }
 
@@ -1104,14 +1223,17 @@ function say(text){
 
 /* ================= 小芽 · 养成 ================= */
 const STAGES=[
-  {name:'种子',  need:0,  line:'还在土里睡大觉'},
-  {name:'发芽',  need:1,  line:'探出小脑袋啦',   grow:'发芽了'},
-  {name:'两叶',  need:3,  line:'张开两片嫩叶子', grow:'长出两片嫩叶了'},
-  {name:'小苗',  need:7,  line:'噌噌往上长',     grow:'长成小苗了'},
-  {name:'花苞',  need:15, line:'攒了个花骨朵',   grow:'冒出花骨朵了'},
-  {name:'开花',  need:30, line:'开出了第一朵花', grow:'开花了'},
-  {name:'繁茂',  need:50, line:'满枝都是花',     grow:'满枝繁花了'},
+  {name:'种子',enName:'Seed',need:0,line:'还在土里睡大觉',enLine:'Still sleeping in the soil'},
+  {name:'发芽',enName:'Sprout',need:1,line:'探出小脑袋啦',enLine:'A little head breaks through',grow:'发芽了',enGrow:'has sprouted'},
+  {name:'两叶',enName:'Two leaves',need:3,line:'张开两片嫩叶子',enLine:'Two tender leaves unfold',grow:'长出两片嫩叶了',enGrow:'has grown two tender leaves'},
+  {name:'小苗',enName:'Young plant',need:7,line:'噌噌往上长',enLine:'Growing up, little by little',grow:'长成小苗了',enGrow:'has become a young plant'},
+  {name:'花苞',enName:'Bud',need:15,line:'攒了个花骨朵',enLine:'Keeping a little bud close',grow:'冒出花骨朵了',enGrow:'has grown a little bud'},
+  {name:'开花',enName:'In bloom',need:30,line:'开出了第一朵花',enLine:'The first flower opens',grow:'开花了',enGrow:'is in bloom'},
+  {name:'繁茂',enName:'Full bloom',need:50,line:'满枝都是花',enLine:'Flowers fill every branch',grow:'满枝繁花了',enGrow:'is in full bloom'},
 ];
+function stageName(st){return currentLang==='en'?st.enName:st.name;}
+function stageLine(st){return currentLang==='en'?st.enLine:st.line;}
+function stageGrow(st){return currentLang==='en'?st.enGrow:st.grow;}
 function stageFor(g){let s=0;for(let i=0;i<STAGES.length;i++){if(g>=STAGES[i].need)s=i;}return s;}
 function sproutSVG(stage,mono){
   const stem=mono||'#2C7A5B',leaf=mono||'#2F8C68',leafD=mono||'#256B50',bud=mono||'#E39A2D',core=mono||'#C05B3C';
@@ -1160,7 +1282,7 @@ function celebrateStageUp(stage){
     av.appendChild(sp);
     setTimeout(()=>sp.remove(),1300);
   }
-  say(pick([`小芽${STAGES[stage].grow}！`,`小芽升级：${STAGES[stage].name}！`,'嘿嘿，我又长大了一点']));
+  say(currentLang==='en'?pick([`Xiaoya ${stageGrow(STAGES[stage])}!`,`Xiaoya is now ${stageName(STAGES[stage])}!`,'Hey, I grew a little!']):pick([`小芽${stageGrow(STAGES[stage])}！`,`小芽升级：${stageName(STAGES[stage])}！`,'嘿嘿，我又长大了一点']));
 }
 function onComplete(){
   const s=store.data.settings;
@@ -1178,8 +1300,8 @@ function openGrowth(){
   const g=store.data.settings.growth||0;
   const st=stageFor(g);
   document.getElementById('growthSprout').innerHTML=sproutSVG(st);
-  document.getElementById('growthStageName').textContent=`🌱 小芽 · ${STAGES[st].name}`;
-  document.getElementById('growthLine').textContent=STAGES[st].line;
+  document.getElementById('growthStageName').textContent=`🌱 Xiaoya · ${stageName(STAGES[st])}`;
+  document.getElementById('growthLine').textContent=stageLine(STAGES[st]);
   const next=STAGES[st+1];
   const fill=document.getElementById('growthFill');
   const count=document.getElementById('growthCount');
@@ -1187,12 +1309,12 @@ function openGrowth(){
     const span=next.need-STAGES[st].need;
     const done=g-STAGES[st].need;
     fill.style.width=Math.min(100,Math.round(done/span*100))+'%';
-    count.textContent=`再完成 ${next.need-g} 条，就${next.grow}`;
+    count.textContent=currentLang==='en'?`${next.need-g} more tasks, then Xiaoya ${stageGrow(next)}`:`再完成 ${next.need-g} 条，就${stageGrow(next)}`;
   }else{
     fill.style.width='100%';
-    count.textContent='已经长到最大啦，满枝繁花';
+    count.textContent=currentLang==='en'?'Already in full bloom':'已经长到最大啦，满枝繁花';
   }
-  document.getElementById('growthTotal').textContent=`💧 一共浇了 ${g} 次水`;
+  document.getElementById('growthTotal').textContent=currentLang==='en'?`💧 Watered ${g} times`:`💧 一共浇了 ${g} 次水`;
   growthMask.classList.add('show');
 }
 document.getElementById('avatarBtn').addEventListener('click',openGrowth);
@@ -1283,7 +1405,7 @@ const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==
 const SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;
 const useWebSpeech=isIOS&&!!SpeechRec;
 function micHintDefault(){
-  return useWebSpeech?'长按 🌱 说话，松开结束':'按住 <b>空格</b> 或长按 🌱 说话，松开结束';
+  return currentLang==='en'?(useWebSpeech?'Long-press 🌱 to speak, then release':'Hold <b>Space</b> or long-press 🌱 to speak, then release'):(useWebSpeech?'长按 🌱 说话，松开结束':'按住 <b>空格</b> 或长按 🌱 说话，松开结束');
 }
 
 /* iPhone：浏览器自带语音识别（苹果服务、国内可用、免下载 42MB 模型） */
@@ -1292,8 +1414,8 @@ function startWebSpeech(btn){
   listenSession=session;
   if(btn)btn.classList.add('listening');
   eqEl.classList.add('on');
-  document.getElementById('micHint').innerHTML='在听啦，<b>松开</b>就结束';
-  showInterim('在听啦，直接说话…');
+  document.getElementById('micHint').innerHTML=currentLang==='en'?'<b>Release</b> when you are done':'在听啦，<b>松开</b>就结束';
+  showInterim(currentLang==='en'?'Listening… just speak':'在听啦，直接说话…');
   const rec=new SpeechRec();
   rec.lang='zh-CN';
   rec.interimResults=true;
@@ -1342,8 +1464,8 @@ async function pressStart(onResult,btn){
   listenSession=session;
   if(btn)btn.classList.add('listening');
   eqEl.classList.add('on');
-  document.getElementById('micHint').innerHTML='在听啦，<b>松开</b>就结束';
-  showInterim('在听啦，直接说话…');
+  document.getElementById('micHint').innerHTML=currentLang==='en'?'<b>Release</b> when you are done':'在听啦，<b>松开</b>就结束';
+  showInterim(currentLang==='en'?'Listening… just speak':'在听啦，直接说话…');
 
   // 累积式：完整句存 finalTexts，未定稿的尾巴存 lastPartial，松手时拼起来
   recognizer.on('result',msg=>{const t=(msg.result&&msg.result.text)||'';
@@ -1531,7 +1653,7 @@ async function openReview(tasks){
   reviewMask.classList.add('show');
   const summaryEl=document.getElementById('reviewSummary');
   summaryEl.classList.add('loading');
-  summaryEl.textContent='🌱 小芽正在回忆你的一天…';
+  summaryEl.textContent=tr('reviewLoading');
   // 未完成转安排
   const wrap=document.getElementById('reviewRolloverWrap');
   rolloverChoices={};const list=document.getElementById('reviewList');list.innerHTML='';
@@ -1594,8 +1716,8 @@ const nameMask=document.getElementById('nameMask');
 function openNameDialog(){
   const cur=(store.data.settings.nickname||'').trim();
   document.getElementById('nameInput').value=cur;
-  document.getElementById('nameTitle').textContent=cur?'🌱 改个称呼？':'🌱 想让我怎么称呼你？';
-  document.getElementById('nameTip').textContent=cur?'换个新叫法，随时都能改':'不一定要叫老板——你喜欢的任何称呼都行';
+  document.getElementById('nameTitle').textContent=currentLang==='en'?(cur?'🌱 Change my name for you?':'🌱 What should I call you?'):(cur?'🌱 改个称呼？':'🌱 想让我怎么称呼你？');
+  document.getElementById('nameTip').textContent=currentLang==='en'?(cur?'You can change it anytime':'It does not have to be Boss — choose anything you like'):(cur?'换个新叫法，随时都能改':'不一定要叫老板——你喜欢的任何称呼都行');
   nameMask.classList.add('show');
   setTimeout(()=>document.getElementById('nameInput').focus(),120);
 }
@@ -1603,7 +1725,7 @@ function closeNameDialog(){ nameMask.classList.remove('show'); }
 function finishWelcome(){
   if(!store.data.settings.apiKey&&!localStorage.getItem('voiceTodo.v2.welcomed')){
     localStorage.setItem('voiceTodo.v2.welcomed','1');
-    setTimeout(()=>say(`${displayName()}好！我是小芽🌱 点左上角⚙️填个 Key，我就能听懂你的废话啦`),500);
+    setTimeout(()=>say(currentLang==='en'?`Hi ${displayName()}! I’m Xiaoya 🌱 Add a Key from ⚙️ and I’ll understand your messy thoughts.`:`${displayName()}好！我是小芽🌱 点左上角⚙️填个 Key，我就能听懂你的废话啦`),500);
   }
 }
 document.getElementById('nameConfirm').addEventListener('click',()=>{
@@ -1641,8 +1763,8 @@ document.getElementById('gearBtn').addEventListener('click',()=>{
 function updateKeyStatus(){
   const el=document.getElementById('keyStatus');
   const k=document.getElementById('apiKeyInput').value.trim();
-  if(k){el.textContent='✓ 已填写';el.className='key-status ok';}
-  else{el.textContent='还没填——没填也能用（走备用规则），填了更聪明';el.className='key-status';}
+  if(k){el.textContent=currentLang==='en'?'✓ Added':'✓ 已填写';el.className='key-status ok';}
+  else{el.textContent=currentLang==='en'?'Not added — local fallback still works; a Key makes me smarter':'还没填——没填也能用（走备用规则），填了更聪明';el.className='key-status';}
 }
 document.getElementById('apiKeyInput').addEventListener('input',updateKeyStatus);
 
@@ -1655,16 +1777,16 @@ async function loadModels(){
     const all=(data.data||[]).filter(m=>(m.supported_protocols||[]).some(p=>p.includes('chat-completions')));
     const rec=['qwen3.5-plus','glm-4.5-air','deepseek-v3.2','kimi-k2.5','qwen3.5-flash','minimax-m2.5','seed-2.0-lite'];
     sel.innerHTML='';
-    const og1=document.createElement('optgroup');og1.label='推荐 · 快又省';
+    const og1=document.createElement('optgroup');og1.label=currentLang==='en'?'Recommended · fast and light':'推荐 · 快又省';
     rec.forEach(id=>{const m=all.find(x=>x.id===id);if(m){const o=document.createElement('option');o.value=m.id;o.textContent=m.name;og1.appendChild(o);}});
     sel.appendChild(og1);
-    const og2=document.createElement('optgroup');og2.label='全部模型';
+    const og2=document.createElement('optgroup');og2.label=currentLang==='en'?'All models':'全部模型';
     all.forEach(m=>{if(!rec.includes(m.id)){const o=document.createElement('option');o.value=m.id;o.textContent=m.name;og2.appendChild(o);}});
     sel.appendChild(og2);
     sel.value=store.data.settings.model;
     if(!sel.value)sel.value='qwen3.5-plus';
     modelsLoaded=true;
-  }catch(e){sel.innerHTML='<option value="qwen3.5-plus">qwen3.5-plus（模型列表加载失败，可手填）</option>';sel.value=store.data.settings.model;}
+  }catch(e){sel.innerHTML=currentLang==='en'?'<option value="qwen3.5-plus">qwen3.5-plus (model list unavailable; enter it manually)</option>':'<option value="qwen3.5-plus">qwen3.5-plus（模型列表加载失败，可手填）</option>';sel.value=store.data.settings.model;}
 }
 
 document.getElementById('testKeyBtn').addEventListener('click',async()=>{
@@ -1672,8 +1794,8 @@ document.getElementById('testKeyBtn').addEventListener('click',async()=>{
   const key=document.getElementById('apiKeyInput').value.trim();
   const base=document.getElementById('baseUrlInput').value.trim();
   const model=document.getElementById('modelSelect').value;
-  if(!key){r.textContent='先填 Key';r.style.color='var(--coral)';return;}
-  r.textContent='测试中…';r.style.color='var(--ink-soft)';
+  if(!key){r.textContent=currentLang==='en'?'Add a Key first':'先填 Key';r.style.color='var(--coral)';return;}
+  r.textContent=currentLang==='en'?'Testing…':'测试中…';r.style.color='var(--ink-soft)';
   try{
     const resp=await fetch(base.replace(/\/$/,'')+'/chat/completions',{
       method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
@@ -1681,7 +1803,7 @@ document.getElementById('testKeyBtn').addEventListener('click',async()=>{
     });
     if(!resp.ok){let msg='HTTP '+resp.status;try{const j=await resp.json();msg=j.error?.message||j.message||msg;}catch(e){}throw new Error(msg);}
     const d=await resp.json();
-    r.textContent='✓ 通了！'+(d.choices?.[0]?.message?.content||'').slice(0,20);r.style.color='var(--pine)';
+    r.textContent=(currentLang==='en'?'✓ Connected! ':'✓ 通了！')+(d.choices?.[0]?.message?.content||'').slice(0,20);r.style.color='var(--pine)';
   }catch(e){r.textContent='✗ '+e.message;r.style.color='var(--coral)';}
 });
 
@@ -1694,7 +1816,7 @@ document.getElementById('settingsClose').addEventListener('click',()=>{
   s.reviewTime=document.getElementById('reviewTimeInput').value||'22:00';
   s.keepHistory=document.getElementById('historyToggle').checked;
   s.voiceAlert=document.getElementById('voiceAlertToggle').checked;
-  store.save();settingsMask.classList.remove('show');toast('设置已保存');
+  store.save();settingsMask.classList.remove('show');toast(currentLang==='en'?'Settings saved':'设置已保存');
 });
 document.querySelectorAll('.sound-opt .play').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();playSound(b.dataset.s);}));
 
@@ -1742,10 +1864,10 @@ function toast(msg){
 
 /* ================= 本周陪伴 ================= */
 const KIND_META={
-  book:{label:'图书',verb:'读',icon:'📚'},
-  film:{label:'电影',verb:'看',icon:'🎬'},
-  music:{label:'音乐',verb:'听',icon:'🎵'},
-  game:{label:'游戏',verb:'玩',icon:'🎮'},
+  book:{label:'书籍',labelEn:'Books',verb:'读',verbEn:'read',icon:'📚'},
+  film:{label:'电影',labelEn:'Films',verb:'看',verbEn:'watch',icon:'🎬'},
+  music:{label:'音乐',labelEn:'Music',verb:'听',verbEn:'listen to',icon:'🎵'},
+  game:{label:'游戏',labelEn:'Games',verb:'玩',verbEn:'play',icon:'🎮'},
 };
 const COMPANIONS={
   book:[
@@ -1836,11 +1958,12 @@ function resolveCompanion(){
   }
   return c;
 }
-function companionVerb(c){return KIND_META[c.kind]?.verb||'看';}
-function companionLabel(c){return KIND_META[c.kind]?.label||'内容';}
+function companionVerb(c){const m=KIND_META[c.kind];return currentLang==='en'?(m?.verbEn||'watch'):(m?.verb||'看');}
+function companionLabel(c){const m=KIND_META[c.kind];return currentLang==='en'?(m?.labelEn||'Content'):(m?.label||'内容');}
 function companionIcon(c){return KIND_META[c.kind]?.icon||'📖';}
 function companionIsQuote(c){return c.mode==='quote'||(c.kind==='book'&&!c.mode&&!c.custom);}
-function companionContentLabel(kind,item){return kind==='book'&&item.mode!=='note'?'摘句':'小芽推荐';}
+function companionContentLabel(kind,item){return currentLang==='en'?(kind==='book'&&item.mode!=='note'?'Excerpt':'Xiaoya pick'):(kind==='book'&&item.mode!=='note'?'摘句':'小芽推荐');}
+function companionKindLabel(kind){const m=KIND_META[kind];return currentLang==='en'?(m?.labelEn||'Content'):(m?.label||'内容');}
 function setCompanion(c){
   const s=store.data.settings;
   s.companionWeek=weekKey();
@@ -1875,11 +1998,12 @@ function renderCompanion(){
   }
   const line=c.lines[companionLineIndex%c.lines.length];
   document.getElementById('emptyEmoji').textContent=companionIcon(c);
-  document.getElementById('quoteTopic').textContent=`本周陪你${companionVerb(c)} · ${c.title}`;
-  document.getElementById('quoteSrc').textContent=companionIsQuote(c)?`${companionLabel(c)} · ${c.author}`:`${companionLabel(c)}推荐 · ${c.author}`;
+  const verb=companionVerb(c);
+  document.getElementById('quoteTopic').textContent=currentLang==='en'?`This week · ${verb} · ${c.title}`:`本周陪你${verb} · ${c.title}`;
+  document.getElementById('quoteSrc').textContent=companionIsQuote(c)?`${companionLabel(c)} · ${c.author}`:currentLang==='en'?`${companionLabel(c)} pick · ${c.author}`:`${companionLabel(c)}推荐 · ${c.author}`;
   document.getElementById('quoteText').textContent=companionIsQuote(c)?'「'+line+'」':line;
-  document.getElementById('quoteText').title='点我换一句';
-  COMPANION_PROMPT.innerHTML=`这周想让我陪你${companionVerb(c)}${c.title}吗？<button type="button" id="companionPromptSwitch">换一个主题</button>`;
+  document.getElementById('quoteText').title=currentLang==='en'?'Tap for another line':'点我换一句';
+  COMPANION_PROMPT.innerHTML=currentLang==='en'?`Would you like me to ${verb} ${c.title} with you this week? <button type="button" id="companionPromptSwitch">Change theme</button>`:`这周想让我陪你${verb}${c.title}吗？<button type="button" id="companionPromptSwitch">换一个主题</button>`;
   const btn=document.getElementById('companionPromptSwitch');
   if(btn)btn.onclick=openCompanionPicker;
 }
@@ -1890,10 +2014,10 @@ function nextCompanionLine(){
 }
 function renderCompanionPicker(){
   const current=resolveCompanion();
-  COMPANION_STATUS.textContent=`当前：${companionVerb(current)}${current.title}`;
+  COMPANION_STATUS.textContent=currentLang==='en'?`Current: ${companionVerb(current)} ${current.title}`:`当前：${companionVerb(current)}${current.title}`;
   COMPANION_LIST.innerHTML=COMPANION_ORDER.map(kind=>{
     const items=COMPANIONS[kind]||[];
-    return `<div class="companion-group"><h4>${KIND_META[kind].icon} ${KIND_META[kind].label}</h4>${items.map(item=>{
+    return `<div class="companion-group"><h4>${KIND_META[kind].icon} ${companionKindLabel(kind)}</h4>${items.map(item=>{
       const selected=current.kind===kind&&current.id===item.id;
       return `<button class="companion-card kind-${kind}${selected?' active':''}" data-kind="${kind}" data-id="${item.id}"><div class="ct">${item.title}</div><div class="cs">${item.author}</div><div class="cl"><b>${companionContentLabel(kind,item)}</b> · ${item.lines.slice(0,2).join('  ·  ')}</div></button>`;
     }).join('')}</div>`;
@@ -1904,7 +2028,7 @@ function renderCompanionPicker(){
       if(!c)return;
       setCompanion(c);
       COMPANION_MASK.classList.remove('show');
-      toast(`这周先陪你${companionVerb(c)}${c.title}`);
+      toast(currentLang==='en'?`This week: ${companionVerb(c)} ${c.title}`:`这周先陪你${companionVerb(c)}${c.title}`);
     });
   });
 }
@@ -1926,7 +2050,7 @@ document.getElementById('companionRecommendBtn').addEventListener('click',()=>{
   const rec=pickRecommendedCompanion(`alt:${weekKey()}:${Date.now()}`,companionKey(cur));
   setCompanion(rec);
   COMPANION_MASK.classList.remove('show');
-  toast(`这周先陪你${companionVerb(rec)}${rec.title}`);
+  toast(currentLang==='en'?`This week: ${companionVerb(rec)} ${rec.title}`:`这周先陪你${companionVerb(rec)}${rec.title}`);
 });
 document.getElementById('companionCustomUse').addEventListener('click',()=>{
   const kind=document.getElementById('companionCustomKind').value;
@@ -1935,11 +2059,13 @@ document.getElementById('companionCustomUse').addEventListener('click',()=>{
   if(!title){toast('先告诉我作品叫什么');document.getElementById('companionCustomTitle').focus();return;}
   setCustomCompanion(kind,title,author);
   COMPANION_MASK.classList.remove('show');
-  toast(`这周就陪你${KIND_META[kind].verb}${title}`);
+  toast(currentLang==='en'?`This week: ${KIND_META[kind].verbEn} ${title}`:`这周就陪你${KIND_META[kind].verb}${title}`);
 });
 function showQuote(){renderCompanion();}
 
 /* ================= 启动 ================= */
+document.getElementById('languageBtn').addEventListener('click',toggleLanguage);
+applyLanguage();
 render();
 showQuote();
 renderAvatar();
