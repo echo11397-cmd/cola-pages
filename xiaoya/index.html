@@ -151,7 +151,7 @@
   .greet{font-family:var(--serif);font-size:23px;font-weight:600;letter-spacing:.5px;line-height:1.2}
   .greet .name{color:var(--pine)}
   .dateline{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);margin-top:3px;white-space:nowrap;letter-spacing:.4px}
-  .whisper{font-family:var(--serif);font-style:italic;font-size:12.5px;color:#9A8A6A;margin-top:4px;line-height:1.4}
+  .whisper{font-family:var(--serif);font-style:italic;font-size:12.5px;color:#9A8A6A;margin-top:4px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
   .whisper::before{content:"「";color:var(--marigold);opacity:.55;margin-right:1px}
   .whisper::after{content:"」";color:var(--marigold);opacity:.55;margin-left:1px}
   .brain-status{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;margin-top:6px;padding:2px 9px;border-radius:20px;width:fit-content;transition:.2s;cursor:pointer}
@@ -329,10 +329,17 @@
   .future-list{display:none;flex-direction:column;gap:7px;margin-top:6px;max-height:190px;overflow-y:auto;padding-right:3px}
   .future.open .future-list{display:flex}
   .future-item{
-    background:#FBF7EE;border:1px solid var(--line);border-radius:12px;padding:9px 12px;
-    font-size:13px;display:flex;justify-content:space-between;gap:8px;align-items:center;
+    background:#FBF7EE;border:1px solid var(--line);border-radius:12px;padding:9px 10px 9px 12px;
+    font-size:13px;display:flex;gap:8px;align-items:center;
   }
+  .future-item .future-check{width:20px;height:20px;border:1.5px solid #DAD2C2;border-radius:7px;background:#fff;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;font-size:13px}
+  .future-item .future-check:hover{border-color:var(--pine)}
+  .future-item .ft{flex:1;min-width:0;line-height:1.4}
   .future-item .fd{font-family:var(--mono);font-size:11px;color:var(--marigold);flex-shrink:0}
+  .future-item .future-actions{display:flex;gap:1px;flex-shrink:0}
+  .future-item .future-actions button{border:0;background:transparent;color:var(--ink-faint);cursor:pointer;padding:4px 5px;border-radius:7px;font-size:13px}
+  .future-item .future-actions button:hover{background:var(--pine-soft);color:var(--pine)}
+  .future-item .future-actions .future-delete:hover{background:#FBE9E3;color:var(--coral)}
 
   /* ===== 整理中（凝练动画） ===== */
   .distilling{
@@ -609,6 +616,7 @@
       <span class="hint">长按说话，松开填入</span>
     </div>
     <div class="row">
+      <label>日期 <input type="date" id="editDate"></label>
       <label>提醒时间 <input type="time" id="editTime"></label>
       <label><input type="checkbox" id="editNoTime"> 不提醒</label>
     </div>
@@ -804,7 +812,7 @@ const I18N={
     settings:'设置',switchLanguage:'切换语言',search:'搜索任务',searchPlaceholder:'搜索所有任务（含已完成、往期）…',all:'全部',completed:'完成',todo:'待办',
     quotePrompt:'这周想让我陪你读什么？可以是书籍、电影、音乐，或者游戏。',quoteCta:'点 🌱 或按空格，说给小芽听；点右上角 ↻ 可以换主题',
     doneHead:'已完成',futureHead:'以后的安排',expand:'点击展开',speak:'说话',typePlaceholder:'或者打字：提醒我下午三点写周报',micHint:'按住空格或长按 🌱 说话，松开结束',
-    reminder:'提醒时间',noReminder:'不提醒',delete:'删除',cancel:'取消',save:'保存',edit:'编辑',finish:'完成',snooze:'推迟30分',testConnection:'测试连接',
+    date:'日期',reminder:'提醒时间',noReminder:'不提醒',delete:'删除',cancel:'取消',save:'保存',edit:'编辑',finish:'完成',snooze:'推迟30分',testConnection:'测试连接',
     adjustTask:'调整任务',holdEdit:'长按语音修改',history:'保留任务修改记录',voiceAlert:'超时未完成时升级催促',dailyReview:'每日收尾时间',micCheck:'麦克风自检',done:'完成',
     review:'今日收尾',reviewLoading:'🌱 小芽正在回忆你的一天…',rollover:'剩下的安排一下？',reviewConfirm:'好，就这么安排',
     nameTitle:'想让我怎么称呼你？',nameTip:'不一定要叫老板——你喜欢的任何称呼都行',namePlaceholder:'比如：小圆 / Echo / 老板',nameConfirm:'好，就这么叫',nameDefault:'还是叫「老板」吧',
@@ -816,7 +824,7 @@ const I18N={
     settings:'Settings',switchLanguage:'Switch language',search:'Search tasks',searchPlaceholder:'Search all tasks, including completed and past…',all:'All',completed:'Done',todo:'To-do',
     quotePrompt:'What would you like me to read, watch, listen to, or play with you this week?',quoteCta:'Hold 🌱 or press Space to speak · tap ↻ to change the theme',
     doneHead:'Completed',futureHead:'Coming up',expand:'Tap to expand',speak:'Speak',typePlaceholder:'Or type: remind me to write the weekly report at 3 PM',micHint:'Hold Space or 🌱 to speak, then release',
-    reminder:'Reminder',noReminder:'No reminder',delete:'Delete',cancel:'Cancel',save:'Save',edit:'Edit',finish:'Done',snooze:'Snooze 30 min',testConnection:'Test connection',
+    date:'Date',reminder:'Reminder',noReminder:'No reminder',delete:'Delete',cancel:'Cancel',save:'Save',edit:'Edit',finish:'Done',snooze:'Snooze 30 min',testConnection:'Test connection',
     adjustTask:'Edit task',holdEdit:'Hold to edit by voice',history:'Keep task history',voiceAlert:'Escalate overdue reminders',dailyReview:'Daily wrap-up time',micCheck:'Test microphone',done:'Done',
     review:'Daily wrap-up',reviewLoading:'🌱 Looking back on your day…',rollover:'What should we do with the rest?',reviewConfirm:'Okay, arrange it',
     nameTitle:'What should I call you?',nameTip:'It does not have to be Boss — choose anything you like',namePlaceholder:'For example: Echo / Sunny / Boss',nameConfirm:'That works',nameDefault:'Just call me Boss',
@@ -910,7 +918,7 @@ function applyLanguage(){
   const history=document.getElementById('historyToggle');if(history)history.parentElement.lastChild.nodeValue=currentLang==='en'?' Keep task history':' 保留任务修改记录';
   const alerts=document.getElementById('voiceAlertToggle');if(alerts)alerts.parentElement.lastChild.nodeValue=currentLang==='en'?' Escalate overdue reminders':' 超时未完成时升级催促';
   const micTest=document.getElementById('micTestBtn');if(micTest)micTest.textContent='🎙️ '+tr('micCheck');
-  setLabelPrefix('#reviewTimeInput',tr('dailyReview'));setLabelPrefix('#editTime',tr('reminder'));setLabelPrefix('#editNoTime',tr('noReminder'));
+  setLabelPrefix('#reviewTimeInput',tr('dailyReview'));setLabelPrefix('#editDate',tr('date'));setLabelPrefix('#editTime',tr('reminder'));setLabelPrefix('#editNoTime',tr('noReminder'));
   const opts=document.querySelectorAll('#companionCustomKind option');if(opts.length>=4){opts[0].textContent=tr('book');opts[1].textContent=tr('film');opts[2].textContent=tr('music');opts[3].textContent=tr('game');}
 }
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -1107,8 +1115,16 @@ function renderFuture(){
       div.className='future-item';
       const dt=new Date(d+'T00:00');
       const label=`${dt.getMonth()+1}/${dt.getDate()}${t.time?' '+t.time:''}`;
-      div.innerHTML=`<span class="ft"></span><span class="fd">${label}</span>`;
+      div.innerHTML=`<button class="future-check" data-act="complete" title="${currentLang==='en'?'Mark done':'完成'}">✓</button><span class="ft"></span><span class="fd">${label}</span><span class="future-actions"><button data-act="edit" title="${currentLang==='en'?'Edit':'编辑'}">✏️</button><button class="future-delete" data-act="delete" title="${currentLang==='en'?'Delete':'删除'}">×</button></span>`;
       div.querySelector('.ft').textContent=t.text;
+      div.querySelectorAll('[data-act]').forEach(btn=>btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        if(btn.dataset.act==='complete')toggleTask(t.id);
+        else if(btn.dataset.act==='edit')openEdit(t.id);
+        else if(btn.dataset.act==='delete'){
+          const f=findTaskGlobal(t.id);if(f&&confirm(currentLang==='en'?'Delete this upcoming task?':'删除这条以后的安排？')){const i=store.data.days[f.d].findIndex(x=>x.id===t.id);if(i>=0){store.data.days[f.d].splice(i,1);store.save();render();toast(currentLang==='en'?'Deleted':'已删除');}}
+        }
+      }));
       list.appendChild(div);
     });
   });
@@ -1154,7 +1170,9 @@ function buildSystemPrompt(){
 Today: ${ds}
 
 Rules:
-- Extract the core action, remove filler words, and split multiple actions into separate add operations.
+- Understand the whole utterance before writing tasks. Do not copy or mechanically split the transcript.
+- Extract the smallest clear, actionable task; remove spoken filler, repetition, self-corrections, and background explanation.
+- Preserve the speaker's intended outcome and rewrite each task as a natural, concise to-do. Split only genuinely separate actions, never fragments of one action.
 - Correct obvious ASR homophones and recover the speaker's real intent.
 - Convert times to 24-hour HH:MM. Use null when no time is mentioned.
 - date defaults to null (today); convert tomorrow and other relative dates to YYYY-MM-DD.
@@ -1172,7 +1190,9 @@ Output JSON only:
 当前：${ds} 星期${wk}
 
 规则：
-- 提炼核心动作（去掉"帮我/记得/那个"等废话），多件事就拆成多条 add
+- 先理解整段口语，再重写任务；不要把原话机械切碎，也不要把背景说明当成待办
+- 提取最小、清楚、可执行的核心事项，去掉口头填充、重复、自我纠正和解释性废话
+- 只有真正独立的动作才拆成多条；同一件事的几个说法合并成一条自然短任务
 - 纠正 ASR 同音错字，还原真实意图（如"家里要选的碗都选了"→"把要刷的碗都刷了"→刷碗）
 - 时间转 HH:MM（"下午三点"→15:00），没提到就 null
 - date 默认 null=今天；"明天/后天"等换成 YYYY-MM-DD
@@ -1245,11 +1265,19 @@ function fallbackBrain(raw){
   if(m){return{ops:[{type:'delete',match:m[1].replace(/^把/,'')}],say:currentLang==='en'?'Okay, deleted':'好，删掉了'};}
   const time=parseTimeFromText(text);
   const cleaned=stripCommandWords(text);
-  const parts=cleaned.split(/[，,、；;]|然后|接着|之后|还有/).map(s=>s.trim()).filter(s=>s.length>=1);
+  const parts=cleaned.split(/[，,、；;]|然后|接着|之后|还有/).map(s=>cleanTaskPhrase(s)).filter(s=>s.length>=1);
   if(!parts.length)return{ops:[],say:currentLang==='en'?'I did not quite catch that. Try again?':'没太听清，再说一次？'};
   return{ops:parts.map(p=>({type:'add',text:p,time,important:false})),say:currentLang==='en'?(parts.length>1?`Saved ${parts.length} tasks`:'Saved'):(parts.length>1?`一口气记下 ${parts.length} 条`:'记下啦')};
 }
 
+function cleanTaskPhrase(text){
+  let s=text.trim().replace(/[。.!！？?]+$/,'');
+  // 口述中常见的连续重复："吃完饭吃完饭"、"打印一下打印一下"。
+  for(let size=Math.floor(s.length/2);size>=2;size--){
+    if(s.length%size===0){const unit=s.slice(0,size);if(unit.repeat(s.length/size)===s){s=unit;break;}}
+  }
+  return s.replace(/^(然后|接着|还有|对了)[，,]?/,'').trim();
+}
 /* 规则版时间解析（备用） */
 function parseTimeFromText(text){
   let m=text.match(/(\d{1,2})[点时:：](\d{1,2})?(半)?/);
@@ -1304,11 +1332,11 @@ function applyOps(brain){
       if(t){t.done=true;t.doneAt=Date.now();acknowledged.delete(t.id);res.push({type:'complete',task:t});onComplete();}
     }else if(op.type==='delete'){
       const t=findTaskByKeyword(op.match);
-      if(t){const arr=store.tasks();const i=arr.findIndex(x=>x.id===t.id);if(i>=0){arr.splice(i,1);res.push({type:'delete',task:t});}}
+      if(t){const arr=store.data.days[findTaskGlobal(t.id).d]||[];const i=arr.findIndex(x=>x.id===t.id);if(i>=0){arr.splice(i,1);res.push({type:'delete',task:t});}}
     }else if(op.type==='move'){
       const t=findTaskByKeyword(op.match);
-      if(t&&op.date){const arr=store.tasks();const i=arr.findIndex(x=>x.id===t.id);
-        if(i>=0){arr.splice(i,1);const nt=Object.assign({},t,{done:false});store.tasks(op.date).push(nt);newIds.add(nt.id);res.push({type:'move',task:nt,date:op.date});}}
+      if(t&&op.date){const f=findTaskGlobal(t.id),arr=f?store.data.days[f.d]:null,i=arr?arr.findIndex(x=>x.id===t.id):-1;
+        if(arr&&i>=0){arr.splice(i,1);const nt=Object.assign({},t,{done:false});store.tasks(op.date).push(nt);newIds.add(nt.id);res.push({type:'move',task:nt,date:op.date});}}
     }else if(op.type==='reset'){
       store.data.days[store.today()]=[];res.push({type:'reset'});
     }
@@ -1737,13 +1765,14 @@ textInput.addEventListener('keydown',e=>{
 /* ================= 编辑弹窗 ================= */
 const editMask=document.getElementById('editMask');
 const editText=document.getElementById('editText');
+const editDate=document.getElementById('editDate');
 const editTime=document.getElementById('editTime');
 const editNoTime=document.getElementById('editNoTime');
 let editingId=null;
 function openEdit(id){
   const f=findTaskGlobal(id);if(!f)return;
   const t=f.t;
-  editingId=id;editText.value=t.text;editTime.value=t.time||'';editNoTime.checked=!t.time;
+  editingId=id;editText.value=t.text;editDate.value=f.d;editTime.value=t.time||'';editNoTime.checked=!t.time;
   const hb=document.getElementById('editHistory');
   if(t.history&&t.history.length&&store.data.settings.keepHistory){
     hb.innerHTML=`<details><summary>这条任务的演变（${t.history.length} 次）</summary><ul>`+
@@ -1755,12 +1784,13 @@ document.getElementById('editSave').addEventListener('click',()=>{
   const f=findTaskGlobal(editingId);
   if(!f){editMask.classList.remove('show');return;}
   const t=f.t;
-  const nt=editText.value.trim(),nTime=editNoTime.checked?null:(editTime.value||null);
+  const nt=editText.value.trim(),nDate=editDate.value||f.d,nTime=editNoTime.checked?null:(editTime.value||null);
   if(!nt){toast('内容不能为空');return;}
-  if(nt!==t.text||nTime!==t.time){
+  if(nt!==t.text||nDate!==f.d||nTime!==t.time){
     if(store.data.settings.keepHistory){t.history=t.history||[];t.history.push({at:Date.now(),from:t.text+(t.time?'（'+t.time+'）':'')});}
+    if(nDate!==f.d){const old=store.data.days[f.d],i=old.findIndex(x=>x.id===t.id);if(i>=0)old.splice(i,1);store.tasks(nDate).push(t);newIds.add(t.id);}
     t.text=nt;t.time=nTime;acknowledged.delete(t.id);store.save();render();
-    toast('已更新'+(nTime?`，${nTime} 提醒你`:''));
+    toast(nDate!==f.d?'已更新日期和任务':'已更新'+(nTime?`，${nTime} 提醒你`:''));
   }
   editMask.classList.remove('show');
 });
