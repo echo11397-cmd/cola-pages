@@ -139,10 +139,11 @@
   .whisper{font-family:var(--serif);font-style:italic;font-size:12.5px;color:#9A8A6A;margin-top:4px;line-height:1.4}
   .whisper::before{content:"「";color:var(--marigold);opacity:.55;margin-right:1px}
   .whisper::after{content:"」";color:var(--marigold);opacity:.55;margin-left:1px}
-  .brain-status{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;margin-top:6px;padding:2px 9px;border-radius:20px;width:fit-content;transition:.2s}
+  .brain-status{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;margin-top:6px;padding:2px 9px;border-radius:20px;width:fit-content;transition:.2s;cursor:pointer}
   .brain-status.on{background:var(--pine-soft);color:var(--pine-deep)}
-  .brain-status.off{background:var(--marigold-soft);color:#A9700F;cursor:pointer}
-  .brain-status.off:hover{filter:brightness(.97)}
+  .brain-status.off{background:var(--marigold-soft);color:#A9700F}
+  .brain-status:hover{filter:brightness(.97);transform:translateY(-1px)}
+  .brain-status:focus-visible{outline:2px solid var(--pine);outline-offset:2px}
   .gear{
     border:none;background:none;cursor:pointer;font-size:18px;color:var(--ink-faint);
     padding:6px;border-radius:10px;transition:.2s;flex-shrink:0;
@@ -506,7 +507,7 @@
       <div class="greet" id="greet">你好，<span class="name">老板</span></div>
       <div class="dateline"><span id="dateLabel"></span></div>
       <div class="whisper" id="weatherHint">今天也要慢慢来</div>
-      <div class="brain-status off" id="brainStatus">⚠️ 备用模式</div>
+      <div class="brain-status off" id="brainStatus" role="button" tabindex="0" title="打开设置">⚠️ 连接未设置</div>
     </div>
     <button class="language-switch" id="languageBtn" title="切换语言">中/EN</button>
     <button class="gear" id="gearBtn" title="设置">⚙️</button>
@@ -794,7 +795,7 @@ const I18N={
     review:'今日收尾',reviewLoading:'🌱 小芽正在回忆你的一天…',rollover:'剩下的安排一下？',reviewConfirm:'好，就这么安排',
     nameTitle:'想让我怎么称呼你？',nameTip:'不一定要叫老板——你喜欢的任何称呼都行',namePlaceholder:'比如：小圆 / Echo / 老板',nameConfirm:'好，就这么叫',nameDefault:'还是叫「老板」吧',
     growthClose:'继续加油',companionTitle:'这周想让我陪你看什么？',companionIntro:'可以选书籍、电影、音乐、游戏，也可以让我先给你挑一个。',recommend:'给我推荐一个',keep:'先不换',customLabel:'库里没有？也可以自己输入一个主题',customTitle:'作品名称，比如《银河帝国》',customAuthor:'作者 / 导演 / 歌手（可选）',customUse:'就用这个',customHint:'找不到也没关系，小芽会先把它记成这周的主题。',book:'书籍',film:'电影',music:'音乐',game:'游戏',
-    brainOffline:'⚠️ 备用模式 · 点我填 Key 变更聪明',brainOnline:'🌱 小芽在线 · ',modelLoading:'🧠 语音模型加载中',organizing:'小芽正在整理…',
+    brainOffline:'⚠️ 连接未设置 · 去设置',brainOnline:'🌱 连接顺畅',modelLoading:'🧠 语音模型加载中',organizing:'小芽正在整理…',
     languageName:'中文',themeLabel:'界面风格',themeAuto:'跟随本周陪伴',themePaper:'暖纸',themeNight:'夜航',themeGarden:'春日花园',themeCinema:'电影蓝',themeMono:'黑白编辑',manualKicker:'FIRST NOTE',manualTitle:'小芽使用说明',manualIntro:'给你留一张小便签，第一次用的时候看一眼就好。',manualSpeakTitle:'按住小芽说话',manualSpeakText:'按住小芽或空格，说完松开；小芽会把一段话整理成待办。',manualThemeTitle:'换一个本周主题',manualThemeText:'空状态里的主题可以每周更换，也可以自己输入一本书、一部电影或一款游戏。',manualGrowthTitle:'完成任务，让小芽长大',manualGrowthText:'每完成一条待办，就给小芽浇一次水；阶段和进度会显示在主界面。',manualClose:'知道啦，开始吧'
   },
   en:{
@@ -806,7 +807,7 @@ const I18N={
     review:'Daily wrap-up',reviewLoading:'🌱 Looking back on your day…',rollover:'What should we do with the rest?',reviewConfirm:'Okay, arrange it',
     nameTitle:'What should I call you?',nameTip:'It does not have to be Boss — choose anything you like',namePlaceholder:'For example: Echo / Sunny / Boss',nameConfirm:'That works',nameDefault:'Just call me Boss',
     growthClose:'Keep growing',companionTitle:'What would you like me to watch with you this week?',companionIntro:'Choose a book, film, piece of music, or game — or let me pick one.',recommend:'Pick for me',keep:'Keep this',customLabel:'Not in the library? Add your own theme',customTitle:'Title, for example Foundation',customAuthor:'Author / director / artist (optional)',customUse:'Use this',customHint:'That is okay — I will keep it as this week’s theme.',book:'Books',film:'Films',music:'Music',game:'Games',
-    brainOffline:'⚠️ Offline mode · Add a Key to wake me up',brainOnline:'🌱 Sprig online · ',modelLoading:'🧠 Loading the voice model',organizing:'Sprig is sorting it out…',
+    brainOffline:'⚠️ Connection not set · Open settings',brainOnline:'🌱 Connection ready',modelLoading:'🧠 Loading the voice model',organizing:'Sprig is sorting it out…',
     languageName:'English',themeLabel:'Interface style',themeAuto:'Follow this week’s theme',themePaper:'Warm paper',themeNight:'Night voyage',themeGarden:'Spring garden',themeCinema:'Cinema blue',themeMono:'Editorial mono',manualKicker:'FIRST NOTE',manualTitle:'A small note from Sprig',manualIntro:'Here is the one-minute tour. After this, I will stay out of your way.',manualSpeakTitle:'Hold Sprig to speak',manualSpeakText:'Hold Sprig or Space, then release when you are done. I will turn the whole thought into tasks.',manualThemeTitle:'Choose a weekly theme',manualThemeText:'Change the quiet-space theme each week, or add your own book, film, piece of music, or game.',manualGrowthTitle:'Complete tasks to help Sprig grow',manualGrowthText:'Each completed task gives Sprig a drop of water. Its stage and progress stay visible on the main screen.',manualClose:'Got it — let’s begin'
   }
 };
@@ -1056,11 +1057,22 @@ document.getElementById('doneHead').addEventListener('click',()=>{
   document.getElementById('doneBox').classList.toggle('open');
 });
 
+function openConnectionSettings(){
+  document.getElementById('gearBtn').click();
+  setTimeout(()=>{
+    const key=document.getElementById('apiKeyInput');
+    key?.scrollIntoView({block:'center',behavior:'smooth'});
+    key?.focus({preventScroll:true});
+  },80);
+}
 function updateBrainStatus(){
   const el=document.getElementById('brainStatus');
   const cfg=store.data.settings;
-  if(cfg.apiKey){el.className='brain-status on';el.textContent=tr('brainOnline')+cfg.model;el.onclick=null;}
-  else{el.className='brain-status off';el.textContent=tr('brainOffline');el.onclick=()=>document.getElementById('gearBtn').click();}
+  el.className=cfg.apiKey?'brain-status on':'brain-status off';
+  el.textContent=tr(cfg.apiKey?'brainOnline':'brainOffline');
+  el.title=currentLang==='en'?'Open API key and model settings':'打开 API Key 和模型设置';
+  el.onclick=openConnectionSettings;
+  el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openConnectionSettings();}};
 }
 
 function renderFuture(){
