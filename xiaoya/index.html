@@ -1928,25 +1928,47 @@ function updateKeyStatus(){
 document.getElementById('apiKeyInput').addEventListener('input',updateKeyStatus);
 document.getElementById('modelSelect').addEventListener('change',()=>{store.data.settings.modelTouched=true;});
 
+const MODEL_CANDIDATES=['qwen3.5-flash','seed-2.0-lite','glm-4.5-air','qwen3.5-plus','deepseek-v3.2','kimi-k2.5','minimax-m2.5'];
+function fillModelOptions(all=[],fromApi=false){
+  const sel=document.getElementById('modelSelect');
+  const current=store.data.settings.model||'qwen3.5-flash';
+  const known=new Set(MODEL_CANDIDATES);
+  const recommended=MODEL_CANDIDATES.filter(id=>!fromApi||all.some(m=>m.id===id));
+  if(!recommended.includes(current))recommended.unshift(current);
+  sel.innerHTML='';
+  const og1=document.createElement('optgroup');
+  og1.label=currentLang==='en'?'Recommended · fast and light':'推荐 · 快又省';
+  recommended.forEach(id=>{
+    const m=all.find(x=>x.id===id),o=document.createElement('option');
+    o.value=id;o.textContent=m?.name||id;og1.appendChild(o);
+  });
+  sel.appendChild(og1);
+  const extra=all.filter(m=>!known.has(m.id));
+  if(extra.length){
+    const og2=document.createElement('optgroup');og2.label=currentLang==='en'?'All models':'全部模型';
+    extra.forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=m.name||m.id;og2.appendChild(o);});
+    sel.appendChild(og2);
+  }
+  sel.value=current;
+  sel.title=fromApi?(currentLang==='en'?'Models loaded from TokenDance':'已从 TokenDance 加载模型'):(currentLang==='en'?'Built-in list · test a model to compare speed':'内置候选列表 · 可用测试连接比较速度');
+}
 async function loadModels(){
   const sel=document.getElementById('modelSelect');
   const base=document.getElementById('baseUrlInput').value.trim()||store.data.settings.baseUrl;
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),4500);
   try{
-    const resp=await fetch(base.replace(/\/$/,'')+'/models');
+    const resp=await fetch(base.replace(/\/$/,'')+'/models',{headers:{'Authorization':'Bearer '+(store.data.settings.apiKey||'')},signal:controller.signal});
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
     const data=await resp.json();
     const all=(data.data||[]).filter(m=>(m.supported_protocols||[]).some(p=>p.includes('chat-completions')));
-    const rec=['qwen3.5-plus','glm-4.5-air','deepseek-v3.2','kimi-k2.5','qwen3.5-flash','minimax-m2.5','seed-2.0-lite'];
-    sel.innerHTML='';
-    const og1=document.createElement('optgroup');og1.label=currentLang==='en'?'Recommended · fast and light':'推荐 · 快又省';
-    rec.forEach(id=>{const m=all.find(x=>x.id===id);if(m){const o=document.createElement('option');o.value=m.id;o.textContent=m.name;og1.appendChild(o);}});
-    sel.appendChild(og1);
-    const og2=document.createElement('optgroup');og2.label=currentLang==='en'?'All models':'全部模型';
-    all.forEach(m=>{if(!rec.includes(m.id)){const o=document.createElement('option');o.value=m.id;o.textContent=m.name;og2.appendChild(o);}});
-    sel.appendChild(og2);
-    sel.value=store.data.settings.model;
-    if(!sel.value)sel.value='qwen3.5-plus';
+    fillModelOptions(all,true);
+  }catch(e){
+    fillModelOptions([],false);
+  }finally{
+    clearTimeout(timer);
     modelsLoaded=true;
-  }catch(e){sel.innerHTML=currentLang==='en'?'<option value="qwen3.5-plus">qwen3.5-plus (model list unavailable; enter it manually)</option>':'<option value="qwen3.5-plus">qwen3.5-plus（模型列表加载失败，可手填）</option>';sel.value=store.data.settings.model;}
+  }
 }
 
 document.getElementById('testKeyBtn').addEventListener('click',async()=>{
