@@ -936,6 +936,10 @@ function playSound(n){ try{(sounds[n]||sounds.chime)();}catch(e){} }
 
 /* ================= 问候 ================= */
 function displayName(){ return (store.data.settings.nickname||'').trim()||'老板'; }
+const ACTION_HINTS={
+  zh:['今天先完成最重要的一件','别等状态，先动手','把今天能做的先做完','现在开始，时间正好','先做五分钟，事情就会动起来','少想一点，先推进一步','把手头这件事落下来','今天的进度，今天交给自己','趁热把它做完','先完成，再慢慢变好','时间会走，今天别留白','一小步也算在前进','把要做的事变成做完的事','现在就做第一步','别把明天借给今天','先动起来，答案会出现','给今天留下一点进展','该做的事，做了就轻松','把力气用在下一步','今天也往前走一点'],
+  en:['Start with the most important thing','Do not wait for the mood. Begin','Make today\'s next step count','Start now; the time is right','Five minutes is enough to begin','Less planning, more doing','Get one thing over the line','Give today a little progress','Do it while the thought is warm','Finish first. Refine later','Time moves. Take the next step','A small step still moves you forward','Turn one intention into action','Start with the very first step','Leave less for tomorrow','Begin, and let the answer appear','Give today one more step','The task gets lighter once begun','Put your energy into the next step','Move one thing forward today']
+};
 function greet(){
   const h=new Date().getHours();
   const zh=h>=5&&h<11?'早上好':h>=11&&h<13?'中午好':h>=13&&h<18?'下午好':h>=18&&h<23?'晚上好':'夜深了';
@@ -944,9 +948,8 @@ function greet(){
   document.getElementById('greet').innerHTML=currentLang==='en'?`${g}, <span class="name" id="nameSpan" title="Click to rename">${displayName()}</span>`:`${g}，<span class="name" id="nameSpan" title="点我改称呼">${displayName()}</span>`;
   const avatar=document.getElementById('avatarBtn');if(avatar)avatar.title=currentLang==='en'?'See how Sprig is growing':'看看小芽怎么长大';
   document.getElementById('nameSpan').addEventListener('click',()=>openNameDialog());
-  const zhHints=['今天也要慢慢来','一件一件来，不急','你比想象中更能干','累了就歇会儿'];
-  const enHints=['Take it slowly today','One thing at a time','You can do more than you think','Rest when you need to'];
-  document.getElementById('weatherHint').textContent=(currentLang==='en'?enHints:zhHints)[new Date().getDate()%(currentLang==='en'?enHints:zhHints).length];
+  const hints=ACTION_HINTS[currentLang]||ACTION_HINTS.zh;
+  document.getElementById('weatherHint').textContent=hints[dayOfYear()%hints.length];
 }
 function fmtDate(){
   const d=new Date();
