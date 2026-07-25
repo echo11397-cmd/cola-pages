@@ -946,7 +946,7 @@ function playSound(n){ try{(sounds[n]||sounds.chime)();}catch(e){} }
 function displayName(){ return (store.data.settings.nickname||'').trim()||'老板'; }
 const ACTION_HINTS={
   zh:['先做最重要的一件','别等状态，先动手','今天先做完一件','现在开始，正是时候','先做五分钟','少想一点，先走一步','把手头这件做完','今天也要有进展','趁热把它做完','先完成，再变好','今天别留白','一小步也算前进','现在就做第一步','别把明天留给今天','先动起来','给今天留点进展','做了就会轻松','把力气用在下一步','今天往前走一点','先做起来再说'],
-  en:['Do the key thing first','Begin before ready','Finish one thing today','Start now','Begin with five minutes','Think less. Move first','Finish the thing at hand','Make progress today','Do it while warm','Finish first. Refine later','Do not leave today blank','One small step counts','Take the first step now','Leave less for tomorrow','Get moving','Give today one more step','It gets lighter begun','Use energy on the next step','Move one thing today','Start, then keep going']
+  en:['Do the key thing first','Begin before ready','Finish one thing today','Start now','Begin with five minutes','Think less. Move first','Finish the thing at hand','Make progress today','Do it while warm','Finish, refine later','Do not leave today blank','One small step counts','Take the first step now','Leave less for tomorrow','Get moving','Give today one more step','It gets lighter begun','Use the next step','Move one thing today','Start, then keep going']
 };
 function greet(){
   const h=new Date().getHours();
