@@ -110,10 +110,25 @@
   .avatar{cursor:pointer}
   .avatar .sprout-svg{width:30px;height:30px;animation:idleSway 4.5s ease-in-out infinite;transform-origin:50% 92%}
   @keyframes idleSway{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
-  .mic-sprout{display:flex;align-items:center;justify-content:center}
-  .mic-sprout .sprout-svg{width:30px;height:30px}
-  #micBtn.listening .sprout-svg{animation:sway .9s ease-in-out infinite;transform-origin:50% 92%}
+  .mic-sprout{display:flex;align-items:center;justify-content:center;position:relative;z-index:2;pointer-events:none}
+  .mic-sprout .sprout-svg{width:32px;height:32px;transform-origin:50% 92%}
+  #micBtn.listening:not(.speaking) .mic-sprout .sprout-svg{animation:sway .9s ease-in-out infinite}
   @keyframes sway{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+  #micBtn:not(.listening):not(.processing) .mic-sprout .sprout-svg{animation:sproutBreathe 3.4s ease-in-out infinite}
+  #micBtn:hover:not(.listening):not(.processing) .mic-sprout .sprout-svg{animation:sproutNotice .65s ease-out forwards}
+  @keyframes sproutBreathe{0%,100%{transform:translateY(1px) rotate(-2deg) scale(.98)}50%{transform:translateY(-1px) rotate(2deg) scale(1.03)}}
+  @keyframes sproutNotice{0%{transform:translateY(1px) rotate(-2deg) scale(.98)}45%{transform:translateY(-3px) rotate(5deg) scale(1.08)}100%{transform:translateY(-1px) rotate(2deg) scale(1.03)}}
+  #micBtn.listening .mic-sprout .sprout-svg{animation:none;transform:translateY(var(--voice-lift,0px)) scale(var(--voice-scale,1)) rotate(var(--voice-tilt,0deg));transition:transform .12s ease-out}
+  #micBtn.listening::after{content:"";position:absolute;inset:-9px;border:1px solid rgba(216,106,72,.42);border-radius:50%;animation:listenRing 1.4s ease-out infinite;pointer-events:none}
+  #micBtn.speaking::after{animation-duration:.55s;border-color:rgba(227,154,45,.72)}
+  @keyframes listenRing{0%{opacity:.75;transform:scale(.92)}100%{opacity:0;transform:scale(1.22)}}
+  #micBtn.processing{background:linear-gradient(150deg,#4F9675,#2C6B55);cursor:wait}
+  #micBtn.processing::before{animation:processPulse 1.2s ease-in-out infinite;box-shadow:0 0 0 0 rgba(227,154,45,.35)}
+  #micBtn.processing .mic-sprout .sprout-svg{animation:sproutGather .8s ease-in-out infinite;transform-origin:50% 92%}
+  #micBtn.processing::after{content:"";position:absolute;inset:-6px;border:1px dashed rgba(227,154,45,.65);border-radius:50%;animation:processOrbit 2.4s linear infinite;pointer-events:none}
+  @keyframes sproutGather{0%,100%{transform:rotate(-3deg) scale(.98)}50%{transform:rotate(3deg) scale(.92) translateY(1px)}}
+  @keyframes processPulse{0%,100%{opacity:.55;transform:scale(.96)}50%{opacity:1;transform:scale(1.05)}}
+  @keyframes processOrbit{to{transform:rotate(360deg)}}
   .mini-sprout .sprout-svg{width:15px;height:15px;display:inline-block;vertical-align:-2px}
   /* 浇水 */
   .water-drop{position:absolute;top:-24px;left:50%;font-size:15px;pointer-events:none;z-index:5;animation:dropFall .85s ease-in forwards}
@@ -1300,11 +1315,19 @@ function applyOps(brain){
 }
 
 /* ================= 凝练流程（核心魔法） ================= */
+function setMicMode(mode){
+  const btn=document.getElementById('micBtn');
+  if(!btn)return;
+  btn.classList.toggle('processing',mode==='processing');
+  btn.setAttribute('aria-label',mode==='listening'?(currentLang==='en'?'Listening':'正在听'):mode==='processing'?(currentLang==='en'?'Sorting your thought':'正在整理你的话'):(currentLang==='en'?'Hold to speak':'按住说话'));
+  btn.title=btn.getAttribute('aria-label');
+}
 let distilling=false;
 async function distill(raw){
   if(!raw||!raw.trim())return;
   raw=raw.trim();
   const cfg=store.data.settings;
+  setMicMode('processing');
   // 显示"整理中"
   const dEl=document.createElement('div');
   dEl.className='distilling';
@@ -1320,6 +1343,7 @@ async function distill(raw){
   }else{ usedFallback=true; }
   if(!brain) brain=fallbackBrain(raw);
 
+  setMicMode('idle');
   dEl.remove();
   const res=applyOps(brain);
   render();
@@ -1560,7 +1584,7 @@ function micHintDefault(){
 function startWebSpeech(btn){
   const session={engine:'webspeech',btn,finalTexts:[],lastPartial:'',recognition:null,safetyTimer:null,stopping:false};
   listenSession=session;
-  if(btn)btn.classList.add('listening');
+  if(btn){btn.classList.add('listening');setMicMode('listening');}
   eqEl.classList.add('on');
   document.getElementById('micHint').innerHTML=currentLang==='en'?'<b>Release</b> when you are done':'在听啦，<b>松开</b>就结束';
   showInterim(currentLang==='en'?'Listening… just speak':'在听啦，直接说话…');
@@ -1608,9 +1632,9 @@ async function pressStart(onResult,btn){
   const audioContext=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
   const recognizer=new model.KaldiRecognizer(audioContext.sampleRate);
   recognizer.setWords(false);
-  const session={stream,audioContext,recognizer,btn,finalTexts:[],lastPartial:'',safetyTimer:null};
+  const session={stream,audioContext,recognizer,btn,finalTexts:[],lastPartial:'',safetyTimer:null,analyser:null,raf:null};
   listenSession=session;
-  if(btn)btn.classList.add('listening');
+  if(btn){btn.classList.add('listening');setMicMode('listening');}
   eqEl.classList.add('on');
   document.getElementById('micHint').innerHTML=currentLang==='en'?'<b>Release</b> when you are done':'在听啦，<b>松开</b>就结束';
   showInterim(currentLang==='en'?'Listening… just speak':'在听啦，直接说话…');
@@ -1622,10 +1646,13 @@ async function pressStart(onResult,btn){
     session.lastPartial=p;showInterim(session.finalTexts.join('')+(p||''));});
 
   const source=audioContext.createMediaStreamSource(stream);
+  const analyser=audioContext.createAnalyser();
+  analyser.fftSize=256;
   const node=audioContext.createScriptProcessor(4096,1,1);
   node.onaudioprocess=e=>{try{recognizer.acceptWaveform(e.inputBuffer);}catch(err){}};
-  source.connect(node);node.connect(audioContext.destination);
-  session.source=source;session.node=node;
+  source.connect(node);source.connect(analyser);node.connect(audioContext.destination);
+  session.source=source;session.node=node;session.analyser=analyser;
+  watchMicLevel(session);
   recState='recording';
   session.safetyTimer=setTimeout(()=>{if(recState==='recording'){holdActive=false;finalizeRecording();toast('太长啦，先处理这一段');}},90000);
   // 若在加载模型期间已松手，立刻收尾
@@ -1647,16 +1674,34 @@ function finalizeRecording(){
   else toast('没听清，再说一次？');
 }
 
+function watchMicLevel(session){
+  if(!session.analyser||!session.btn)return;
+  const data=new Uint8Array(session.analyser.fftSize);
+  const tick=()=>{
+    if(listenSession!==session)return;
+    session.analyser.getByteTimeDomainData(data);
+    let sum=0;for(const value of data){const n=(value-128)/128;sum+=n*n;}
+    const level=Math.min(1,Math.sqrt(sum/data.length)*3.8);
+    session.btn.style.setProperty('--voice-scale',(1+level*.1).toFixed(3));
+    session.btn.style.setProperty('--voice-lift',(-level*3).toFixed(2)+'px');
+    session.btn.style.setProperty('--voice-tilt',((level-.15)*8).toFixed(2)+'deg');
+    session.btn.classList.toggle('speaking',level>.08);
+    session.raf=requestAnimationFrame(tick);
+  };
+  session.raf=requestAnimationFrame(tick);
+}
 function cleanupSession(){
   const s=listenSession;if(!s)return;
   if(s.safetyTimer)clearTimeout(s.safetyTimer);
+  if(s.raf)cancelAnimationFrame(s.raf);
   if(s.engine==='webspeech'&&s.recognition){s.stopping=true;try{s.recognition.stop();}catch(e){}}
   try{if(s.node)s.node.disconnect();}catch(e){}
   try{if(s.source)s.source.disconnect();}catch(e){}
   try{if(s.stream)s.stream.getTracks().forEach(t=>t.stop());}catch(e){}
   try{if(s.audioContext)s.audioContext.close();}catch(e){}
-  if(s.btn)s.btn.classList.remove('listening');
+  if(s.btn){s.btn.classList.remove('listening','speaking');s.btn.style.removeProperty('--voice-scale');s.btn.style.removeProperty('--voice-lift');s.btn.style.removeProperty('--voice-tilt');}
   eqEl.classList.remove('on');
+  setMicMode('idle');
   document.getElementById('micHint').innerHTML=micHintDefault();
   listenSession=null;recState='idle';hideInterim();
 }
