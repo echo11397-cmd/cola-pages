@@ -164,8 +164,8 @@
   .growth-strip-copy{min-width:0;flex:1}
   .growth-strip-title{font-size:11.5px;font-weight:600;line-height:1.35}
   .growth-strip-sub{font-size:10.5px;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .growth-strip-meter{width:54px;height:5px;background:#E3EBDD;border-radius:5px;overflow:hidden;flex-shrink:0}
-  .growth-strip-fill{height:100%;background:#3A9270;border-radius:5px;transition:width .4s ease}
+  .growth-strip-meter{width:76px;height:6px;background:#DDE8DF;border-radius:5px;overflow:hidden;flex-shrink:0}
+  .growth-strip-fill{height:100%;background:var(--pine);border-radius:5px;transition:width .4s ease;min-width:0}
   .growth-strip-arrow{font-size:14px;color:var(--pine);flex-shrink:0}
   .search-toggle{
     border:1px solid var(--line);background:#FBF7EE;cursor:pointer;font-size:15px;
@@ -1334,8 +1334,15 @@ const STAGES=[
 function stageName(st){return currentLang==='en'?st.enName:st.name;}
 function stageLine(st){return currentLang==='en'?st.enLine:st.line;}
 function stageGrow(st){return currentLang==='en'?st.enGrow:st.grow;}
+function growthProgress(g){
+  const st=stageFor(g),next=STAGES[st+1];
+  if(!next)return {st,next,done:g-STAGES[st].need,span:0,pct:100};
+  const span=next.need-STAGES[st].need;
+  const done=Math.max(0,Math.min(span,g-STAGES[st].need));
+  return {st,next,done,span,pct:Math.round(done/span*100)};
+}
 function renderGrowthStrip(){
-  const g=store.data.settings.growth||0,st=stageFor(g),next=STAGES[st+1];
+  const g=store.data.settings.growth||0,{st,next,done,span,pct}=growthProgress(g);
   const fill=document.getElementById('growthStripFill');
   const title=document.getElementById('growthStripTitle');
   const sub=document.getElementById('growthStripSub');
@@ -1343,10 +1350,9 @@ function renderGrowthStrip(){
   if(!fill||!title||!sub||!sprout)return;
   sprout.innerHTML=sproutSVG(st);
   if(next){
-    const span=next.need-STAGES[st].need,done=g-STAGES[st].need;
-    fill.style.width=Math.min(100,Math.round(done/span*100))+'%';
+    fill.style.width=pct+'%';
     title.textContent=currentLang==='en'?`Sprig · ${stageName(STAGES[st])}`:`小芽 · ${stageName(STAGES[st])}`;
-    sub.textContent=currentLang==='en'?`${next.need-g} more tasks to ${stageName(next)}`:`再完成 ${next.need-g} 条，就${stageGrow(next)}`;
+    sub.textContent=currentLang==='en'?`${done} of ${span} tasks · ${next.need-g} more to ${stageName(next)}`:`已完成 ${done} / ${span} 条，再完成 ${next.need-g} 条，就${stageGrow(next)}`;
   }else{
     fill.style.width='100%';
     title.textContent=currentLang==='en'?'Sprig · Full bloom':'小芽 · 繁茂';
@@ -1409,6 +1415,7 @@ function onComplete(){
   s.growth=(s.growth||0)+1;
   store.save();
   renderAvatar();
+  renderGrowthStrip();
   waterAvatar();
   const after=stageFor(s.growth);
   if(after>before)setTimeout(()=>celebrateStageUp(after),750);
@@ -1417,18 +1424,15 @@ function onComplete(){
 const growthMask=document.getElementById('growthMask');
 function openGrowth(){
   const g=store.data.settings.growth||0;
-  const st=stageFor(g);
+  const {st,next,done,span,pct}=growthProgress(g);
   document.getElementById('growthSprout').innerHTML=sproutSVG(st);
   document.getElementById('growthStageName').textContent=`🌱 Sprig · ${stageName(STAGES[st])}`;
   document.getElementById('growthLine').textContent=stageLine(STAGES[st]);
-  const next=STAGES[st+1];
   const fill=document.getElementById('growthFill');
   const count=document.getElementById('growthCount');
   if(next){
-    const span=next.need-STAGES[st].need;
-    const done=g-STAGES[st].need;
-    fill.style.width=Math.min(100,Math.round(done/span*100))+'%';
-    count.textContent=currentLang==='en'?`${next.need-g} more tasks, then Sprig ${stageGrow(next)}`:`再完成 ${next.need-g} 条，就${stageGrow(next)}`;
+    fill.style.width=pct+'%';
+    count.textContent=currentLang==='en'?`${done} of ${span} tasks · ${next.need-g} more, then Sprig ${stageGrow(next)}`:`已完成 ${done} / ${span} 条，再完成 ${next.need-g} 条，就${stageGrow(next)}`;
   }else{
     fill.style.width='100%';
     count.textContent=currentLang==='en'?'Already in full bloom':'已经长到最大啦，满枝繁花';
