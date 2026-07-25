@@ -111,7 +111,7 @@
   .avatar .sprout-svg{width:30px;height:30px;animation:idleSway 4.5s ease-in-out infinite;transform-origin:50% 92%}
   @keyframes idleSway{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
   .mic-sprout{display:flex;align-items:center;justify-content:center;position:relative;z-index:2;pointer-events:none}
-  .mic-sprout .sprout-svg{width:32px;height:32px;transform-origin:50% 92%}
+  .mic-sprout .sprout-svg{width:38px;height:38px;transform-origin:50% 92%}
   #micBtn.listening:not(.speaking) .mic-sprout .sprout-svg{animation:sway .9s ease-in-out infinite}
   @keyframes sway{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
   #micBtn:not(.listening):not(.processing) .mic-sprout .sprout-svg{animation:sproutBreathe 3.4s ease-in-out infinite}
@@ -1409,7 +1409,9 @@ function renderGrowthStrip(){
 }
 function stageFor(g){let s=0;for(let i=0;i<STAGES.length;i++){if(g>=STAGES[i].need)s=i;}return s;}
 function sproutSVG(stage,mono){
-  const stem=mono||'#2C7A5B',leaf=mono||'#2F8C68',leafD=mono||'#256B50',bud=mono||'#E39A2D',core=mono||'#C05B3C';
+  const palette=mono&&typeof mono==='object'?mono:null;
+  const tint=(key,fallback)=>palette?.[key]||(typeof mono==='string'?mono:null)||fallback;
+  const stem=tint('stem','#2C7A5B'),leaf=tint('leaf','#2F8C68'),leafD=tint('leafD','#256B50'),bud=tint('bud','#E39A2D'),core=tint('core','#C05B3C');
   const L=(cx,cy,rx,ry,rot,f)=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${f||leaf}" transform="rotate(${rot} ${cx} ${cy})"/>`;
   const S=(d,w)=>`<path d="${d}" stroke="${stem}" stroke-width="${w||4}" fill="none" stroke-linecap="round"/>`;
   const flower=(cx,cy,s)=>{
@@ -1422,7 +1424,7 @@ function sproutSVG(stage,mono){
     return p+`<circle cx="${cx}" cy="${cy}" r="${3.8*s}" fill="${core}"/>`;
   };
   let inner='';
-  if(stage===0){inner=`<ellipse cx="50" cy="78" rx="9" ry="11" fill="${mono||'#A9855B'}"/><ellipse cx="47" cy="74" rx="3" ry="4.5" fill="${mono||'#C4A476'}" opacity=".55"/>${S('M50 68 Q51 63 49 58',3)}`;}
+  if(stage===0){inner=`<ellipse cx="50" cy="78" rx="9" ry="11" fill="${tint('seed','#A9855B')}"/><ellipse cx="47" cy="74" rx="3" ry="4.5" fill="${tint('seedLight','#C4A476')}" opacity=".55"/>${S('M50 68 Q51 63 49 58',3)}`;}
   else if(stage===1){inner=`${S('M50 88 Q50 80 50 72',3.5)}${L(44,69,7,3.2,30)}${L(56,69,7,3.2,-30)}`;}
   else if(stage===2){inner=`${S('M50 88 Q49 72 50 56',4)}${L(38,53,14,6,26)}${L(62,53,14,6,-26)}`;}
   else if(stage===3){inner=`${S('M50 88 Q49 66 50 46',4.5)}${L(37,62,13,5.5,26)}${L(63,62,13,5.5,-26)}${L(42,48,10,4.5,26)}${L(58,48,10,4.5,-26)}`;}
@@ -1493,7 +1495,7 @@ document.getElementById('growthStrip').addEventListener('click',openGrowth);
 document.getElementById('growthClose').addEventListener('click',()=>growthMask.classList.remove('show'));
 growthMask.addEventListener('click',e=>{if(e.target===growthMask)growthMask.classList.remove('show');});
 /* 麦克风图标换成小芽 */
-document.getElementById('micSprout').innerHTML=sproutSVG(2,'#fff');
+document.getElementById('micSprout').innerHTML=sproutSVG(2,{stem:'#5C9146',leaf:'#B8D86A',leafD:'#86B64E',bud:'#E7B94F',core:'#B8743D'});
 document.getElementById('editMicSprout').innerHTML=sproutSVG(2);
 
 /* ================= 语音识别（Vosk 离线） ================= */
