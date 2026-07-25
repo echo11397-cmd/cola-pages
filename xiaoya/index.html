@@ -751,10 +751,12 @@ const store = {
     }
     if(!this.data.settings) this.data.settings=this.defaultSettings();
     this.data.settings=Object.assign(this.defaultSettings(), this.data.settings);
+    // Existing installs used Plus before the latency pass; move untouched installs to Flash.
+    if(this.data.settings.model==='qwen3.5-plus'&&!this.data.settings.modelTouched){this.data.settings.model='qwen3.5-flash';this.save();}
   },
   defaultSettings(){
     return {
-      apiKey:'', model:'qwen3.5-plus', baseUrl:'https://tokendance.space/gateway/v1',
+      apiKey:'', model:'qwen3.5-flash', modelTouched:false, baseUrl:'https://tokendance.space/gateway/v1',
       sound:'chime', reviewTime:'22:00', keepHistory:true, voiceAlert:true, lastReviewDate:'',
       nickname:'', growth:0, companionWeek:'', companionKind:'', companionId:'',
       companionCustomTitle:'', companionCustomAuthor:''
@@ -1130,11 +1132,17 @@ function parseBrainJSON(text){
 
 async function askLLM(messages,temperature){
   const cfg=store.data.settings;
-  const resp=await fetch(cfg.baseUrl.replace(/\/$/,'')+'/chat/completions',{
-    method:'POST',
-    headers:{'Authorization':'Bearer '+cfg.apiKey,'Content-Type':'application/json'},
-    body:JSON.stringify({model:cfg.model,messages,temperature:temperature??0.2})
-  });
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),12000);
+  let resp;
+  try{
+    resp=await fetch(cfg.baseUrl.replace(/\/$/,'')+'/chat/completions',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+cfg.apiKey,'Content-Type':'application/json'},
+      body:JSON.stringify({model:cfg.model,messages,temperature:temperature??0,max_tokens:180}),
+      signal:controller.signal
+    });
+  }finally{clearTimeout(timeout);}
   if(!resp.ok){
     let msg='HTTP '+resp.status;
     try{const j=await resp.json();msg=j.error?.message||j.message||msg;}catch(e){}
@@ -1144,8 +1152,12 @@ async function askLLM(messages,temperature){
   return data.choices?.[0]?.message?.content||'';
 }
 async function callBrain(raw){
-  const content=await askLLM([{role:'system',content:buildSystemPrompt()},{role:'user',content:raw}],0.2);
+  const content=await askLLM([{role:'system',content:buildSystemPrompt()},{role:'user',content:raw}],0);
   return parseBrainJSON(content);
+}
+function canUseInstantPath(raw){
+  const text=raw.trim();
+  return text.length<=10&&!/^把/.test(text)&&!/[，,、；;]|然后|接着|之后|还有/.test(text)&&!/(提醒|记得|别忘|帮我|请|下午|上午|晚上|明天|后天|完成|删除|取消|挪|重置)/.test(text);
 }
 
 /* 备用大脑：没有 key 或调用失败时，用规则提炼（离线可用） */
@@ -1245,9 +1257,9 @@ async function distill(raw){
   emptyHint.style.display='none';
 
   let brain=null,usedFallback=false;
-  if(cfg.apiKey){
+  if(cfg.apiKey&&!canUseInstantPath(raw)){
     try{ brain=await callBrain(raw); }
-    catch(e){ console.error('brain error',e); usedFallback=true; toast(currentLang==='en'?'Sprig got distracted: '+e.message:'小芽走神了：'+e.message); }
+    catch(e){ console.error('brain error',e); usedFallback=true; toast(currentLang==='en'?(e.name==='AbortError'?'Sprig took too long — saved it locally':'Sprig got distracted: '+e.message):(e.name==='AbortError'?'小芽响应太慢，先帮你记下了':'小芽走神了：'+e.message)); }
   }else{ usedFallback=true; }
   if(!brain) brain=fallbackBrain(raw);
 
@@ -1851,6 +1863,7 @@ function updateKeyStatus(){
   else{el.textContent=currentLang==='en'?'Not added — local fallback still works; a Key makes me smarter':'还没填——没填也能用（走备用规则），填了更聪明';el.className='key-status';}
 }
 document.getElementById('apiKeyInput').addEventListener('input',updateKeyStatus);
+document.getElementById('modelSelect').addEventListener('change',()=>{store.data.settings.modelTouched=true;});
 
 async function loadModels(){
   const sel=document.getElementById('modelSelect');
@@ -1896,6 +1909,7 @@ document.getElementById('settingsClose').addEventListener('click',()=>{
   s.apiKey=document.getElementById('apiKeyInput').value.trim();
   s.baseUrl=document.getElementById('baseUrlInput').value.trim()||s.baseUrl;
   s.model=document.getElementById('modelSelect').value||s.model;
+  s.modelTouched=true;
   s.sound=document.querySelector('input[name="sound"]:checked').value;
   s.reviewTime=document.getElementById('reviewTimeInput').value||'22:00';
   s.keepHistory=document.getElementById('historyToggle').checked;
@@ -2190,6 +2204,8 @@ render();
 showQuote();
 renderAvatar();
 document.getElementById('micHint').innerHTML=micHintDefault();
+// Warm the offline recognizer before the first press so model loading is not part of task latency.
+if(!useWebSpeech)setTimeout(()=>ensureModel(),350);
 if(!(store.data.settings.nickname||'').trim()){
   // 首次使用：先问称呼
   setTimeout(()=>openNameDialog(),600);
