@@ -1180,7 +1180,8 @@ function parseBrainJSON(text){
 async function askLLM(messages,temperature){
   const cfg=store.data.settings;
   const controller=new AbortController();
-  const timeout=setTimeout(()=>controller.abort(),12000);
+  // Voice capture should fail fast; local fallback can save the task without making the UI wait.
+  const timeout=setTimeout(()=>controller.abort(),6500);
   let resp;
   try{
     resp=await fetch(cfg.baseUrl.replace(/\/$/,'')+'/chat/completions',{
@@ -1190,7 +1191,7 @@ async function askLLM(messages,temperature){
         model:cfg.model,
         messages,
         temperature:temperature??0,
-        max_tokens:180,
+        max_tokens:96,
         enable_thinking:false,
         chat_template_kwargs:{enable_thinking:false}
       }),
@@ -1955,14 +1956,16 @@ document.getElementById('testKeyBtn').addEventListener('click',async()=>{
   const model=document.getElementById('modelSelect').value;
   if(!key){r.textContent=currentLang==='en'?'Add a Key first':'先填 Key';r.style.color='var(--coral)';return;}
   r.textContent=currentLang==='en'?'Testing…':'测试中…';r.style.color='var(--ink-soft)';
+  const started=performance.now();
   try{
     const resp=await fetch(base.replace(/\/$/,'')+'/chat/completions',{
       method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
-      body:JSON.stringify({model,messages:[{role:'user',content:'说"通了"两个字'}],temperature:0})
+      body:JSON.stringify({model,messages:[{role:'user',content:'说"通了"两个字'}],temperature:0,max_tokens:8,enable_thinking:false,chat_template_kwargs:{enable_thinking:false}})
     });
     if(!resp.ok){let msg='HTTP '+resp.status;try{const j=await resp.json();msg=j.error?.message||j.message||msg;}catch(e){}throw new Error(msg);}
     const d=await resp.json();
-    r.textContent=(currentLang==='en'?'✓ Connected! ':'✓ 通了！')+(d.choices?.[0]?.message?.content||'').slice(0,20);r.style.color='var(--pine)';
+    const ms=Math.round(performance.now()-started);
+    r.textContent=(currentLang==='en'?'✓ Connected · ':'✓ 通了 · ')+ms+'ms';r.style.color='var(--pine)';
   }catch(e){r.textContent='✗ '+e.message;r.style.color='var(--coral)';}
 });
 
