@@ -28,6 +28,10 @@
     --marigold-soft:#FBF0DC;
     --coral:#C05B3C;
     --line:#EDE6D8;
+    --glow-a:#FBF4E6;
+    --glow-b:rgba(255,244,214,.7);
+    --tape-a:rgba(227,154,45,.55);
+    --tape-b:rgba(227,154,45,.4);
     --shadow:0 18px 50px -18px rgba(60,48,30,.35);
     --serif:"Songti SC","STSong","Noto Serif SC",serif;
     --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",sans-serif;
@@ -39,7 +43,7 @@
     font-family:var(--sans);
     color:var(--ink);
     background:
-      radial-gradient(120% 90% at 50% -10%, #FBF4E6 0%, var(--page-a) 42%, var(--page-b) 100%);
+      radial-gradient(120% 90% at 50% -10%, var(--glow-a) 0%, var(--page-a) 42%, var(--page-b) 100%);
     min-height:100vh;
     display:flex;justify-content:center;align-items:flex-start;
     padding:max(22px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
@@ -55,7 +59,7 @@
   body::after{
     content:"";position:fixed;top:-30vh;left:50%;transform:translateX(-50%);
     width:120vw;height:70vh;pointer-events:none;z-index:0;
-    background:radial-gradient(50% 60% at 50% 0%, rgba(255,244,214,.7), transparent 70%);
+    background:radial-gradient(50% 60% at 50% 0%, var(--glow-b), transparent 70%);
   }
 
   /* ===== 桌面小组件卡片 ===== */
@@ -75,7 +79,7 @@
   .tape{
     position:absolute;top:-13px;left:50%;transform:translateX(-50%) rotate(-2.5deg);
     width:118px;height:30px;border-radius:3px;
-    background:repeating-linear-gradient(45deg, rgba(227,154,45,.55) 0 8px, rgba(227,154,45,.4) 8px 16px);
+    background:repeating-linear-gradient(45deg, var(--tape-a) 0 8px, var(--tape-b) 8px 16px);
     box-shadow:0 3px 8px rgba(120,90,40,.18);
     opacity:.92;
   }
@@ -717,6 +721,19 @@
     <div class="sound-opt"><input type="radio" name="sound" value="musicbox"><span>🎵 八音盒</span><button class="icon-btn play btn ghost" data-s="musicbox" style="padding:4px 10px">▶</button></div>
 
     <div class="row" style="margin-top:14px">
+      <label style="flex:1">🎨 <span id="themeLabel">界面风格</span>
+        <select id="themeSelect" style="margin-left:8px;max-width:190px">
+          <option value="auto">跟随本周陪伴</option>
+          <option value="paper">暖纸</option>
+          <option value="night">夜航</option>
+          <option value="garden">春日花园</option>
+          <option value="cinema">电影蓝</option>
+          <option value="mono">黑白编辑</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="row" style="margin-top:14px">
       <label>每日收尾时间 <input type="time" id="reviewTimeInput" value="22:00"></label>
     </div>
     <div class="row">
@@ -759,7 +776,7 @@ const store = {
       apiKey:'', model:'qwen3.5-flash', modelTouched:false, baseUrl:'https://tokendance.space/gateway/v1',
       sound:'chime', reviewTime:'22:00', keepHistory:true, voiceAlert:true, lastReviewDate:'',
       nickname:'', growth:0, companionWeek:'', companionKind:'', companionId:'',
-      companionCustomTitle:'', companionCustomAuthor:''
+      theme:'auto', companionCustomTitle:'', companionCustomAuthor:''
     };
   },
   save(){ localStorage.setItem(this.key, JSON.stringify(this.data)); },
@@ -778,7 +795,7 @@ const I18N={
     nameTitle:'想让我怎么称呼你？',nameTip:'不一定要叫老板——你喜欢的任何称呼都行',namePlaceholder:'比如：小圆 / Echo / 老板',nameConfirm:'好，就这么叫',nameDefault:'还是叫「老板」吧',
     growthClose:'继续加油',companionTitle:'这周想让我陪你看什么？',companionIntro:'可以选书籍、电影、音乐、游戏，也可以让我先给你挑一个。',recommend:'给我推荐一个',keep:'先不换',customLabel:'库里没有？也可以自己输入一个主题',customTitle:'作品名称，比如《银河帝国》',customAuthor:'作者 / 导演 / 歌手（可选）',customUse:'就用这个',customHint:'找不到也没关系，小芽会先把它记成这周的主题。',book:'书籍',film:'电影',music:'音乐',game:'游戏',
     brainOffline:'⚠️ 备用模式 · 点我填 Key 变更聪明',brainOnline:'🌱 小芽在线 · ',modelLoading:'🧠 语音模型加载中',organizing:'小芽正在整理…',
-    languageName:'中文',manualKicker:'FIRST NOTE',manualTitle:'小芽使用说明',manualIntro:'给你留一张小便签，第一次用的时候看一眼就好。',manualSpeakTitle:'按住小芽说话',manualSpeakText:'按住小芽或空格，说完松开；小芽会把一段话整理成待办。',manualThemeTitle:'换一个本周主题',manualThemeText:'空状态里的主题可以每周更换，也可以自己输入一本书、一部电影或一款游戏。',manualGrowthTitle:'完成任务，让小芽长大',manualGrowthText:'每完成一条待办，就给小芽浇一次水；阶段和进度会显示在主界面。',manualClose:'知道啦，开始吧'
+    languageName:'中文',themeLabel:'界面风格',themeAuto:'跟随本周陪伴',themePaper:'暖纸',themeNight:'夜航',themeGarden:'春日花园',themeCinema:'电影蓝',themeMono:'黑白编辑',manualKicker:'FIRST NOTE',manualTitle:'小芽使用说明',manualIntro:'给你留一张小便签，第一次用的时候看一眼就好。',manualSpeakTitle:'按住小芽说话',manualSpeakText:'按住小芽或空格，说完松开；小芽会把一段话整理成待办。',manualThemeTitle:'换一个本周主题',manualThemeText:'空状态里的主题可以每周更换，也可以自己输入一本书、一部电影或一款游戏。',manualGrowthTitle:'完成任务，让小芽长大',manualGrowthText:'每完成一条待办，就给小芽浇一次水；阶段和进度会显示在主界面。',manualClose:'知道啦，开始吧'
   },
   en:{
     settings:'Settings',switchLanguage:'Switch language',search:'Search tasks',searchPlaceholder:'Search all tasks, including completed and past…',all:'All',completed:'Done',todo:'To-do',
@@ -790,9 +807,25 @@ const I18N={
     nameTitle:'What should I call you?',nameTip:'It does not have to be Boss — choose anything you like',namePlaceholder:'For example: Echo / Sunny / Boss',nameConfirm:'That works',nameDefault:'Just call me Boss',
     growthClose:'Keep growing',companionTitle:'What would you like me to watch with you this week?',companionIntro:'Choose a book, film, piece of music, or game — or let me pick one.',recommend:'Pick for me',keep:'Keep this',customLabel:'Not in the library? Add your own theme',customTitle:'Title, for example Foundation',customAuthor:'Author / director / artist (optional)',customUse:'Use this',customHint:'That is okay — I will keep it as this week’s theme.',book:'Books',film:'Films',music:'Music',game:'Games',
     brainOffline:'⚠️ Offline mode · Add a Key to wake me up',brainOnline:'🌱 Sprig online · ',modelLoading:'🧠 Loading the voice model',organizing:'Sprig is sorting it out…',
-    languageName:'English',manualKicker:'FIRST NOTE',manualTitle:'A small note from Sprig',manualIntro:'Here is the one-minute tour. After this, I will stay out of your way.',manualSpeakTitle:'Hold Sprig to speak',manualSpeakText:'Hold Sprig or Space, then release when you are done. I will turn the whole thought into tasks.',manualThemeTitle:'Choose a weekly theme',manualThemeText:'Change the quiet-space theme each week, or add your own book, film, piece of music, or game.',manualGrowthTitle:'Complete tasks to help Sprig grow',manualGrowthText:'Each completed task gives Sprig a drop of water. Its stage and progress stay visible on the main screen.',manualClose:'Got it — let’s begin'
+    languageName:'English',themeLabel:'Interface style',themeAuto:'Follow this week’s theme',themePaper:'Warm paper',themeNight:'Night voyage',themeGarden:'Spring garden',themeCinema:'Cinema blue',themeMono:'Editorial mono',manualKicker:'FIRST NOTE',manualTitle:'A small note from Sprig',manualIntro:'Here is the one-minute tour. After this, I will stay out of your way.',manualSpeakTitle:'Hold Sprig to speak',manualSpeakText:'Hold Sprig or Space, then release when you are done. I will turn the whole thought into tasks.',manualThemeTitle:'Choose a weekly theme',manualThemeText:'Change the quiet-space theme each week, or add your own book, film, piece of music, or game.',manualGrowthTitle:'Complete tasks to help Sprig grow',manualGrowthText:'Each completed task gives Sprig a drop of water. Its stage and progress stay visible on the main screen.',manualClose:'Got it — let’s begin'
   }
 };
+const THEME_PRESETS={
+  paper:{paper:'#FFFDF7',pageA:'#F3EADB',pageB:'#EADFC9',ink:'#33302A',soft:'#9C9488',faint:'#C4BCAD',pine:'#2C7A5B',deep:'#1F5E46',pineSoft:'#E4F0E9',gold:'#E39A2D',goldSoft:'#FBF0DC',coral:'#C05B3C',line:'#EDE6D8',glow:'#FBF4E6',glowB:'rgba(255,244,214,.7)',tapeA:'rgba(227,154,45,.55)',tapeB:'rgba(227,154,45,.4)'},
+  night:{paper:'#F5F2EB',pageA:'#DDE6E2',pageB:'#C8D7D2',ink:'#25322F',soft:'#71817B',faint:'#AAB9B2',pine:'#2C6D65',deep:'#1E4D4A',pineSoft:'#DCEDEA',gold:'#C88A2C',goldSoft:'#F7EED8',coral:'#B85445',line:'#D5E0DB',glow:'#EDF4ED',glowB:'rgba(218,237,229,.78)',tapeA:'rgba(200,138,44,.5)',tapeB:'rgba(183,116,40,.38)'},
+  garden:{paper:'#FFFCF5',pageA:'#F0E6D1',pageB:'#E5D8C0',ink:'#343029',soft:'#8E8879',faint:'#BBB19E',pine:'#4D7C59',deep:'#31573D',pineSoft:'#E5F0E4',gold:'#D88A42',goldSoft:'#FBEBDD',coral:'#B85B4D',line:'#E9DDC8',glow:'#FFF5E7',glowB:'rgba(255,240,209,.75)',tapeA:'rgba(216,138,66,.52)',tapeB:'rgba(184,91,77,.33)'},
+  cinema:{paper:'#FAF8F4',pageA:'#E3E9EF',pageB:'#CBD5E0',ink:'#2A3138',soft:'#78828A',faint:'#AEB7BE',pine:'#426C78',deep:'#2C505C',pineSoft:'#DDEBED',gold:'#C8893D',goldSoft:'#F7ECD9',coral:'#AE5B5C',line:'#D9E0E5',glow:'#F1F5F8',glowB:'rgba(232,241,247,.8)',tapeA:'rgba(174,91,92,.45)',tapeB:'rgba(66,108,120,.35)'},
+  mono:{paper:'#FAFAF8',pageA:'#E8E8E3',pageB:'#D6D6D0',ink:'#2D2D2A',soft:'#777771',faint:'#AAA9A1',pine:'#4A4A45',deep:'#30302D',pineSoft:'#E7E7E1',gold:'#A17C3A',goldSoft:'#F0E9D8',coral:'#985B4D',line:'#DDDDD6',glow:'#F3F3EF',glowB:'rgba(255,255,250,.78)',tapeA:'rgba(161,124,58,.42)',tapeB:'rgba(74,74,69,.3)'}
+};
+const THEME_BY_KIND={book:'paper',film:'cinema',music:'night',game:'garden'};
+function activeThemeId(){const chosen=store.data.settings.theme||'auto';if(chosen!=='auto')return chosen;const c=typeof resolveCompanion==='function'?resolveCompanion():null;return THEME_BY_KIND[c?.kind]||'paper';}
+function applyTheme(){
+  const id=activeThemeId(),t=THEME_PRESETS[id]||THEME_PRESETS.paper,root=document.documentElement;
+  const vars={paper:t.paper,'page-a':t.pageA,'page-b':t.pageB,ink:t.ink,'ink-soft':t.soft,'ink-faint':t.faint,pine:t.pine,'pine-deep':t.deep,'pine-soft':t.pineSoft,marigold:t.gold,'marigold-soft':t.goldSoft,coral:t.coral,line:t.line,'glow-a':t.glow,'glow-b':t.glowB,'tape-a':t.tapeA,'tape-b':t.tapeB};
+  Object.entries(vars).forEach(([key,value])=>root.style.setProperty('--'+key,value));
+  root.dataset.theme=id;
+  const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=t.pine;
+}
 let currentLang=sessionStorage.getItem('xiaoya.language')|| (Math.random()<.5?'zh':'en');
 sessionStorage.setItem('xiaoya.language',currentLang);
 function tr(key,vars={}){let s=(I18N[currentLang]&&I18N[currentLang][key])||I18N.zh[key]||key;return s.replace(/\{(\w+)\}/g,(_,k)=>vars[k]??'');}
@@ -853,6 +886,8 @@ function applyLanguage(){
   if(settingLabels.length>=3){settingLabels[0].textContent=currentLang==='en'?'🔑 TokenDance API key':'🔑 TokenDance API Key';settingLabels[1].textContent=currentLang==='en'?'🧠 Model':'🧠 模型（推荐快又省的）';settingLabels[2].textContent=currentLang==='en'?'🔗 Endpoint':'🔗 接口地址';}
   const keyHint=document.querySelector('#settingsMask .field .hint');if(keyHint)keyHint.textContent=currentLang==='en'?'Create this in the TokenDance console. It stays in your browser and is never sent elsewhere.':'在 TokenDance 控制台「API 密钥」创建。只存在你本机浏览器，不会发给别处。';
   if(typeof updateKeyStatus==='function')updateKeyStatus();
+  const themeLabel=document.getElementById('themeLabel');if(themeLabel)themeLabel.textContent=tr('themeLabel');
+  const themeSelect=document.getElementById('themeSelect');if(themeSelect){themeSelect.options[0].textContent=tr('themeAuto');themeSelect.options[1].textContent=tr('themePaper');themeSelect.options[2].textContent=tr('themeNight');themeSelect.options[3].textContent=tr('themeGarden');themeSelect.options[4].textContent=tr('themeCinema');themeSelect.options[5].textContent=tr('themeMono');themeSelect.value=store.data.settings.theme||'auto';}
   const soundLabel=document.querySelector('#settingsMask .modal > label');if(soundLabel)soundLabel.textContent=currentLang==='en'?'Reminder sound (▶ preview)':'提醒声音（▶ 试听）';
   const soundSpans=document.querySelectorAll('#settingsMask .sound-opt span');if(soundSpans.length>=3){soundSpans[0].textContent=currentLang==='en'?'🔔 Soft chime':'🔔 轻柔钟声';soundSpans[1].textContent=currentLang==='en'?'💧 Water drop':'💧 水滴';soundSpans[2].textContent=currentLang==='en'?'🎵 Music box':'🎵 八音盒';}
   const editMic=document.getElementById('editMicBtn');if(editMic)editMic.lastChild.nodeValue=currentLang==='en'?' Hold to edit by voice':' 长按语音修改';
@@ -1846,6 +1881,7 @@ let modelsLoaded=false;
 document.getElementById('gearBtn').addEventListener('click',()=>{
   const s=store.data.settings;
   document.getElementById('apiKeyInput').value=s.apiKey;
+  document.getElementById('themeSelect').value=s.theme||'auto';
   document.getElementById('baseUrlInput').value=s.baseUrl;
   document.querySelector(`input[name="sound"][value="${s.sound}"]`).checked=true;
   document.getElementById('reviewTimeInput').value=s.reviewTime;
@@ -1910,6 +1946,8 @@ document.getElementById('settingsClose').addEventListener('click',()=>{
   s.baseUrl=document.getElementById('baseUrlInput').value.trim()||s.baseUrl;
   s.model=document.getElementById('modelSelect').value||s.model;
   s.modelTouched=true;
+  s.theme=document.getElementById('themeSelect').value||'auto';
+  applyTheme();
   s.sound=document.querySelector('input[name="sound"]:checked').value;
   s.reviewTime=document.getElementById('reviewTimeInput').value||'22:00';
   s.keepHistory=document.getElementById('historyToggle').checked;
@@ -2105,6 +2143,7 @@ function setCompanion(c){
   s.companionCustomTitle='';
   s.companionCustomAuthor='';
   store.save();
+  applyTheme();
   activeCompanionKey='';
   renderCompanion();
   renderCompanionPicker();
@@ -2117,6 +2156,7 @@ function setCustomCompanion(kind,title,author){
   s.companionCustomTitle=title.trim();
   s.companionCustomAuthor=(author||'').trim();
   store.save();
+  applyTheme();
   activeCompanionKey='';
   renderCompanion();
   renderCompanionPicker();
@@ -2200,6 +2240,7 @@ function showQuote(){renderCompanion();}
 /* ================= 启动 ================= */
 document.getElementById('languageBtn').addEventListener('click',toggleLanguage);
 applyLanguage();
+applyTheme();
 render();
 showQuote();
 renderAvatar();
